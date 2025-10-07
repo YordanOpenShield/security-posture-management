@@ -63,6 +63,12 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        if: always()
+        with:
+          version: 'latest'
+
       - name: Save kubeconfig
         if: always()
         run: |
@@ -76,12 +82,6 @@ jobs:
           fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
           doctl kubernetes cluster kubeconfig save $CLUSTER_ID
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-        if: always()
-        with:
-          version: 'latest'
 
       - name: Install cert-manager
         run: |
