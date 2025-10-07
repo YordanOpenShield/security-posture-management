@@ -71,12 +71,8 @@ jobs:
 
       - name: Save kubeconfig
         if: always()
-        env:
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           set -e
-          # Authenticate doctl with token from secrets
-          doctl auth init --access-token ${DIGITALOCEAN_TOKEN}
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
           CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
           if [ -z "$CLUSTER_ID" ]; then
@@ -159,6 +155,10 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
+      - name: Terraform Output
+        working-directory: ./terraform
+        run: terraform output
+
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         if: always()
@@ -173,6 +173,7 @@ jobs:
 
       - name: Save kubeconfig
         if: always()
+        working-directory: ./
         run: |
           set -e
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
