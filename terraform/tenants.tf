@@ -1,7 +1,9 @@
-module "tenant" {
+module "tenant_demo" {
   source = "./modules/tenant"
 
-  tenant = var.tenant
+  # Demo tenant for testing the CI-first provisioning and module behavior.
+  # Change this to var.tenant or use for_each when creating multiple tenants.
+  tenant = "demo"
 
   # images (can be overridden via root variables)
   opensearch_image = var.opensearch_image
@@ -13,3 +15,4 @@ module "tenant" {
 
   # quota/limits (defaults from module)
 }
+
