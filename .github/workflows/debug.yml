@@ -36,10 +36,10 @@ jobs:
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          CLUSTER_ID=$(terraform -chdir=terraform output -json cluster_id | jq -r '.cluster_id.value')
           echo "$(terraform -chdir=terraform output -json cluster_id)"
-          if [ -z "CLUSTER_ID" ]; then
-            echo "Could not parse cluster_name from terraform output:"
+          CLUSTER_ID=$(terraform -chdir=terraform output -json cluster_id | jq -r '.cluster_id.value')
+          if [ -z "$CLUSTER_ID" ]; then
+            echo "Could not parse cluster_id from terraform output:"
             echo "cluster_id: $CLUSTER_ID"
             exit 0
           fi
