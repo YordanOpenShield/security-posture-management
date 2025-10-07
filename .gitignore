@@ -1,7 +1,1 @@
 .env
-.env
-# local terraform and secrets
-.terraform/
-terraform.tfstate
-terraform.tfstate.backup
-secrets/
