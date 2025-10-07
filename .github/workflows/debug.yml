@@ -11,9 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -35,16 +32,19 @@ jobs:
           version: 'latest'
 
       - name: Save kubeconfig
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          CLUSTER_NAME=$(terraform -chdir=terraform output cluster_name 2>/dev/null)
-          if [ -z "$CLUSTER_NAME" ]; then
+          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null)
+          if [ -z "CLUSTER_ID" ]; then
             echo "Could not parse cluster_name from terraform output:"
-            echo "cluster_name: $CLUSTER_NAME"
+            echo "cluster_id: CLUSTER_ID"
             exit 0
           fi
-          echo "Saving kubeconfig for cluster: $CLUSTER_NAME"
-          doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
+          doctl Auth init --access-token "$DIGITALOCEAN_TOKEN"
+          echo "Saving kubeconfig for cluster: CLUSTER_ID"
+          doctl kubernetes cluster kubeconfig save "CLUSTER_ID"
 
       - name: Verify kubectl connectivity
         run: |
