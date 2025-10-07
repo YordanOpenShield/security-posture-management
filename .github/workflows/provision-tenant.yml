@@ -185,6 +185,7 @@ jobs:
             exit 0
           fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
+          doctl auth init -access-token ${{ secrets.DIGITALOCEAN_TOKEN }}
           doctl kubernetes cluster kubeconfig save $CLUSTER_ID
 
       - name: Collect cluster debug info
