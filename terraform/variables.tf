@@ -37,6 +37,12 @@ variable "opensearch_image" {
   default     = "opensearchproject/opensearch:2.9.0"
 }
 
+variable "k8s_version" {
+  description = "Optional Kubernetes version slug for DigitalOcean DOKS (leave empty to auto-select)"
+  type        = string
+  default     = ""
+}
+
 variable "opa_image" {
   description = "OPA image"
   type        = string
