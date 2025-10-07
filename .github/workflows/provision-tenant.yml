@@ -176,7 +176,7 @@ jobs:
       - name: Save kubeconfig
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          CLUSTER_ID="${{ steps.tfout.outputs.cluster_id }}"
+          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null)
           if [ -z "$CLUSTER_ID" ]; then
             echo "Could not parse cluster_id from terraform output:"
             echo "cluster_id: $CLUSTER_ID"
