@@ -196,14 +196,14 @@ jobs:
       - name: Save kubeconfig
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null)
-          if [ -z "$CLUSTER_ID" ]; then
-            echo "Could not parse cluster_id from terraform output:"
-            echo "cluster_id: $CLUSTER_ID"
+          CLUSTER_NAME=$(terraform -chdir=terraform output cluster_name 2>/dev/null)
+          if [ -z "$CLUSTER_NAME" ]; then
+            echo "Could not parse cluster_name from terraform output:"
+            echo "cluster_name: $CLUSTER_NAME"
             exit 0
           fi
-          echo "Saving kubeconfig for cluster: $CLUSTER_ID"
-          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
+          echo "Saving kubeconfig for cluster: $CLUSTER_NAME"
+          doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
 
       - name: Verify kubectl connectivity
         run: |
