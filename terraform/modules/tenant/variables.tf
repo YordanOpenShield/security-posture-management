@@ -112,7 +112,7 @@ variable "faraday_limits" {
   type = map(string)
   default = {
     cpu = "1"
-    memory = "2Gi"
+    memory = "1Gi"
   }
 }
 

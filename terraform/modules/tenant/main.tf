@@ -169,7 +169,39 @@ resource "kubernetes_deployment" "faraday" {
         container {
           name  = "faraday"
           image = var.faraday_image
+          image_pull_policy = "IfNotPresent"
           port { container_port = 5985 }
+          # Startup probe helps for slow application initialization
+          startup_probe {
+            http_get {
+              path = "/"
+              port = 5985
+            }
+            failure_threshold     = 30
+            period_seconds        = 10
+            initial_delay_seconds = 10
+            timeout_seconds       = 5
+          }
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = 5985
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 6
+          }
+          liveness_probe {
+            http_get {
+              path = "/"
+              port = 5985
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 20
+            timeout_seconds       = 5
+            failure_threshold     = 3
+          }
           resources {
             requests = var.faraday_requests
             limits   = var.faraday_limits
