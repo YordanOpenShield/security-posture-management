@@ -161,20 +161,15 @@ jobs:
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
-        if: always()
         with:
           version: 'latest'
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
-        if: always()
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Save kubeconfig
-        if: always()
-        env:
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           set -e
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
@@ -186,10 +181,9 @@ jobs:
             exit 0
           fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
-          doctl kubernetes cluster kubeconfig save -t $DIGITALOCEAN_TOKEN $CLUSTER_ID
+          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
 
       - name: Collect cluster debug info
-        if: always()
         env:
           TENANT: ${{ github.event.inputs.tenant }}
         run: |
