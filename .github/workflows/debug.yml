@@ -14,9 +14,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.12.0
-        env:
-          ACTIONS_STEP_DEBUG: false
-          ACTIONS_RUNNER_DEBUG: false
 
       - name: Terraform Init
         working-directory: ./terraform
@@ -34,6 +31,7 @@ jobs:
 
       - name: Save kubeconfig
         env:
+          ACTIONS_STEP_DEBUG: false
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
