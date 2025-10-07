@@ -9,22 +9,14 @@ on:
         description: 'Tenant id to provision'
         required: true
         default: 'demo'
-      region:
-        description: 'DigitalOcean region'
+      quota_hard:
+        description: 'Optional ResourceQuota map (HCL map syntax) e.g. {"pods"="20","requests.cpu"="4"}'
         required: false
-        default: 'nyc3'
-      droplet_size:
-        description: 'DO node size slug (node pool)'
+        default: ''
+      limit_default:
+        description: 'Optional LimitRange default map (HCL map syntax) e.g. {"cpu"="250m","memory"="512Mi"}'
         required: false
-        default: 's-2vcpu-4gb'
-      min_nodes:
-        description: 'Minimum nodes in node pool'
-        required: false
-        default: '1'
-      max_nodes:
-        description: 'Maximum nodes in node pool'
-        required: false
-        default: '5'
+        default: ''
 
 jobs:
   provision:
@@ -34,6 +26,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -47,91 +42,19 @@ jobs:
       - name: Terraform Apply (create cluster)
         working-directory: ./terraform
         run: |
-          terraform apply \
-            -var "tenant=${{ github.event.inputs.tenant }}" \
-            -var "region=${{ github.event.inputs.region }}" \
-            -var "droplet_size=${{ github.event.inputs.droplet_size }}" \
-            -var "min_nodes=${{ github.event.inputs.min_nodes }}" \
-            -var "max_nodes=${{ github.event.inputs.max_nodes }}" \
-            -auto-approve
+          set -e
+          # Build terraform -var arguments conditionally from workflow inputs
+          ARGS=("-var" "tenant=${{ github.event.inputs.tenant }}")
 
-      - name: Fetch kubeconfig from Terraform
-        working-directory: ./terraform
-        run: terraform output -raw cluster_id > cluster_id_raw
+          if [ -n "${{ github.event.inputs.quota_hard }}" ]; then
+            ARGS+=("-var" "quota_hard=${{ github.event.inputs.quota_hard }}")
+          fi
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          if [ -n "${{ github.event.inputs.limit_default }}" ]; then
+            ARGS+=("-var" "limit_default=${{ github.event.inputs.limit_default }}")
+          fi
 
-      - name: Save kubeconfig using doctl
-        working-directory: ./terraform
-        run: |
-          CLUSTER_ID=$(cat cluster_id_raw)
-          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
-
-      - name: Configure kubectl
-        run: |
-          # doctl writes kubeconfig to default location; just ensure permissions
-          mkdir -p $HOME/.kube
-          chmod 600 $HOME/.kube/config || true
-
-      - name: Verify cluster connectivity
-        run: |
-          echo "== kubectl current-context =="
-          kubectl config current-context
-          echo "== cluster-info =="
-          kubectl cluster-info
-          echo "== kubectl version =="
-          kubectl version --short
-          echo "== nodes (initial) =="
-          kubectl get nodes -o wide
-          echo "Waiting for nodes to be Ready (timeout 180s)"
-          kubectl wait --for=condition=Ready node --all --timeout=180s
-          echo "== kube-system pods =="
-          kubectl get pods -n kube-system
-
-      - name: Render manifests for tenant
-        run: |
-          TENANT=${{ github.event.inputs.tenant }}
-          mkdir -p rendered
-          for f in k8s/*.yaml; do
-            sed "s/{{TENANT}}/${TENANT}/g" "$f" > rendered/$(basename "$f")
-          done
-
-      - name: Apply manifests
-        run: |
-          kubectl apply -f rendered/namespace.yaml
-          kubectl apply -f rendered/
-
-      - name: Wait and smoke-check
-        run: |
-          NAMESPACE=${{ github.event.inputs.tenant }}
-          kubectl -n $NAMESPACE rollout status deployment/dashboards --timeout=180s || true
-          kubectl -n $NAMESPACE rollout status deployment/opa --timeout=180s || true
-          kubectl -n $NAMESPACE rollout status deployment/faraday --timeout=180s || true
-          kubectl -n $NAMESPACE wait --for=condition=ready pod -l app=opensearch --timeout=300s || true
-          # quick port-forward checks for basic reachability
-          kubectl -n $NAMESPACE port-forward svc/opensearch 9200:9200 2>/dev/null &
-          kubectl -n $NAMESPACE port-forward svc/dashboards 5601:5601 2>/dev/null &
-          kubectl -n $NAMESPACE port-forward svc/opa 8181:8181 2>/dev/null &
-          kubectl -n $NAMESPACE port-forward svc/faraday 5985:5985 2>/dev/null &
-          sleep 8
-          curl --fail --max-time 10 http://127.0.0.1:9200 || echo "opensearch check failed"
-          curl --fail --max-time 10 http://127.0.0.1:5601 || echo "dashboards check failed"
-          curl --fail --max-time 10 http://127.0.0.1:8181 || echo "opa check failed"
-          curl --fail --max-time 10 http://127.0.0.1:5985 || echo "faraday check failed"
-
-      - name: Upload rendered manifests (artifact)
-        uses: actions/upload-artifact@v4
-        with:
-          name: rendered-manifests-${{ github.event.inputs.tenant }}
-          path: rendered/
+          terraform apply "${ARGS[@]}" -auto-approve
 
       - name: Upload terraform state (artifact)
         if: always()

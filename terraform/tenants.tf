@@ -1,9 +1,10 @@
-module "tenant_demo" {
+module "tenant" {
   source = "./modules/tenant"
 
-  # Demo tenant for testing the CI-first provisioning and module behavior.
-  # Change this to var.tenant or use for_each when creating multiple tenants.
-  tenant = "demo"
+  # Tenant is provided via the CI workflow input (var.tenant). Region and node pool
+  # settings use defaults from variables.tf so passing only the tenant is sufficient
+  # for CI-first provisioning.
+  tenant = var.tenant
 
   # images (can be overridden via root variables)
   opensearch_image = var.opensearch_image
