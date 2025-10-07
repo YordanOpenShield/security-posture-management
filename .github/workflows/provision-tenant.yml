@@ -110,24 +110,21 @@ jobs:
             git push origin HEAD:$BRANCH
           fi
 
+      - name: Install doctl (action)
+        if: failure()
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
       - name: Collect cluster debug info
         if: failure()
         env:
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
           TENANT: ${{ github.event.inputs.tenant }}
         run: |
           set -euo pipefail
           echo "Collecting debug info for tenant: $TENANT"
 
-          # Install doctl
-          OS=$(uname | tr '[:upper:]' '[:lower:]')
-          ARCH=amd64
-          echo "Installing doctl for ${OS}-${ARCH}"
-          curl -sL "https://github.com/digitalocean/doctl/releases/latest/download/doctl-${OS}-${ARCH}.tar.gz" | tar -xz
-          sudo mv doctl /usr/local/bin
-
-          # Authenticate doctl and save kubeconfig
-          doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
+          # Try to get cluster id from terraform outputs and save kubeconfig
           CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id || true)
           if [ -n "$CLUSTER_ID" ]; then
             doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" || true
@@ -135,7 +132,7 @@ jobs:
             echo "cluster_id not available from terraform output"
           fi
 
-          # Install kubectl action (fallback if not available) - use curl to download if missing
+          # Install kubectl if missing
           if ! command -v kubectl >/dev/null 2>&1; then
             echo "Installing kubectl"
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
