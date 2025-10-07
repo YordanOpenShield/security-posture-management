@@ -56,7 +56,18 @@ jobs:
 
       - name: Fetch kubeconfig from Terraform
         working-directory: ./terraform
-        run: terraform output -raw kubeconfig > kubeconfig_raw
+        run: terraform output -raw cluster_id > cluster_id_raw
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Save kubeconfig using doctl
+        working-directory: ./terraform
+        run: |
+          CLUSTER_ID=$(cat cluster_id_raw)
+          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
@@ -65,9 +76,24 @@ jobs:
 
       - name: Configure kubectl
         run: |
+          # doctl writes kubeconfig to default location; just ensure permissions
           mkdir -p $HOME/.kube
-          mv terraform/kubeconfig_raw $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
+          chmod 600 $HOME/.kube/config || true
+
+      - name: Verify cluster connectivity
+        run: |
+          echo "== kubectl current-context =="
+          kubectl config current-context
+          echo "== cluster-info =="
+          kubectl cluster-info
+          echo "== kubectl version =="
+          kubectl version --short
+          echo "== nodes (initial) =="
+          kubectl get nodes -o wide
+          echo "Waiting for nodes to be Ready (timeout 180s)"
+          kubectl wait --for=condition=Ready node --all --timeout=180s
+          echo "== kube-system pods =="
+          kubectl get pods -n kube-system
 
       - name: Render manifests for tenant
         run: |

@@ -1,9 +1,7 @@
-output "kubeconfig" {
-  description = "Kubeconfig to access the created cluster (base64 encoded)"
-  value       = digitalocean_kubernetes_cluster.spm_cluster.kube_config
-  sensitive = true
-}
-
 output "cluster_name" {
   value = digitalocean_kubernetes_cluster.spm_cluster.name
+}
+
+output "cluster_id" {
+  value = digitalocean_kubernetes_cluster.spm_cluster.id
 }
