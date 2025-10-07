@@ -157,12 +157,6 @@ jobs:
         working-directory: ./terraform
         run: terraform init -input=false
 
-      - name: Terraform Output (raw cluster_id)
-        working-directory: ./terraform
-        id: tfout
-        run: |
-          terraform output cluster_id
-
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
