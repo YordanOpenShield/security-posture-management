@@ -1,4 +1,4 @@
-name: Provision Tenant
+name: Debug Kubernetes Cluster
 permissions:
   contents: read
 
