@@ -71,9 +71,6 @@ jobs:
 
       - name: Save kubeconfig
         if: always()
-        depends-on:
-          - Install doctl
-          - Install kubectl
         run: |
           set -e
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
@@ -126,10 +123,6 @@ jobs:
 
       - name: Commit Terraform state back to repo
         if: always()
-        depends-on:
-          - Install doctl
-          - Install kubectl
-          - Save kubeconfig
         run: |
           set -e
           git config user.email "github-actions[bot]@users.noreply.github.com"
