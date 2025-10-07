@@ -74,7 +74,7 @@ jobs:
         run: |
           set -e
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
+          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null)
           if [ -z "$CLUSTER_ID" ]; then
             echo "Could not parse cluster_id from terraform output:"
             echo "cluster_id: $CLUSTER_ID"
@@ -129,7 +129,7 @@ jobs:
           git config user.name "github-actions[bot]"
           BRANCH=${GITHUB_REF#refs/heads/}
           echo "Branch: $BRANCH"
-          git add terraform/terraform.tfstate || true
+          git add terraform/terraform.tfstate
           if git diff --staged --quiet; then
             echo "No state changes to commit"
           else
@@ -161,7 +161,7 @@ jobs:
         working-directory: ./terraform
         id: tfout
         run: |
-          terraform output cluster_id || true
+          terraform output cluster_id
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -173,73 +173,42 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Collect cluster debug files
-        env:
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
-          TENANT: ${{ github.event.inputs.tenant }}
+      - name: Save kubeconfig
         run: |
-          set -euo pipefail
-          mkdir -p debug-output
-          echo "DEBUG START: $(date)" > debug-output/collected_at.txt
-
-          if [ -z "${DIGITALOCEAN_TOKEN:-}" ]; then
-            echo "DIGITALOCEAN_TOKEN missing - aborting debug collection" | tee debug-output/error.txt
-            exit 0
-          fi
-
-          doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
-          doctl account get --format Email,Status --no-header > debug-output/doctl_account.txt || true
-
-          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
+          # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
+          CLUSTER_ID="${{ steps.tfout.outputs.cluster_id }}""
           if [ -z "$CLUSTER_ID" ]; then
-            echo "no cluster id parsed; saving and exiting" | tee -a debug-output/cluster_id.txt
-            tar -czf debug-output.tar.gz -C debug-output . || true
+            echo "Could not parse cluster_id from terraform output:"
+            echo "cluster_id: $CLUSTER_ID"
             exit 0
           fi
-          echo "$CLUSTER_ID" > debug-output/cluster_id.txt
+          echo "Saving kubeconfig for cluster: $CLUSTER_ID"
+          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
 
-          doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" --context "do-$CLUSTER_ID" || true
-
-          kubectl config view --minify > debug-output/kubeconfig_minify.yaml || true
-          kubectl config current-context > debug-output/current_context.txt || true
-          kubectl cluster-info > debug-output/cluster_info.txt 2>&1 || true
-
-          kubectl get nodes -o wide > debug-output/nodes.txt 2>&1 || true
-          kubectl describe nodes > debug-output/nodes_describe.txt 2>&1 || true
-
-          NAMESPACE="${TENANT}"
-          kubectl get ns "$NAMESPACE" -o yaml > debug-output/namespace_yaml.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get pods -o wide > debug-output/pods.txt 2>&1 || true
-
-          mkdir -p debug-output/pod-details
-          for P in $(kubectl -n "$NAMESPACE" get pod -o name --no-headers 2>/dev/null || true); do
-            PN=$(basename "$P")
-            kubectl -n "$NAMESPACE" describe pod "$PN" > debug-output/pod-details/"$PN".describe.txt 2>&1 || true
-            CONTAINERS=$(kubectl -n "$NAMESPACE" get pod "$PN" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true)
-            for C in $CONTAINERS; do
-              kubectl -n "$NAMESPACE" logs "$PN" -c "$C" --tail=500 > debug-output/pod-details/"$PN"."$C".logs.txt 2>&1 || true
-              kubectl -n "$NAMESPACE" logs "$PN" -c "$C" --previous --tail=200 > debug-output/pod-details/"$PN"."$C".logs_prev.txt 2>&1 || true
-            done
-          done
-
-          kubectl -n "$NAMESPACE" get deployments -o wide > debug-output/deployments.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get statefulsets -o wide > debug-output/statefulsets.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get svc -o wide > debug-output/services.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get ing -o wide > debug-output/ingress.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get pvc -o wide > debug-output/pvcs.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" describe pvc >> debug-output/pvc_describe.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get events --sort-by=.metadata.creationTimestamp > debug-output/events.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" get endpoints -o wide > debug-output/endpoints.txt 2>&1 || true
-
-          kubectl top nodes > debug-output/top_nodes.txt 2>&1 || true
-          kubectl -n "$NAMESPACE" top pods > debug-output/top_pods.txt 2>&1 || true
-
-          cp -v terraform/terraform.tfstate debug-output/terraform.tfstate || true
-
-          tar -czf debug-output.tar.gz -C debug-output . || true
-
-      - name: Upload debug-output
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-output-${{ github.event.inputs.tenant }}
-          path: debug-output.tar.gz
+      - name: Verify kubectl connectivity
+        run: |
+          kubectl get nodes
+          kubectl get pods --all-namespaces
+          kubectl get svc --all-namespaces
+      
+      - name: Debug Info
+        run: |
+          echo "Terraform raw output (cluster_id): ${{ steps.tfout.outputs.cluster_id }}"
+          echo "Kubernetes context:"
+          kubectl config current-context
+          echo "Kubernetes nodes:"
+          kubectl get nodes -o wide
+          echo "Kubernetes all namespaces pods:"
+          kubectl get pods --all-namespaces -o wide
+          echo "Kubernetes all namespaces services:"
+          kubectl get svc --all-namespaces -o wide
+          echo "Kubernetes all namespaces ingresses:"
+          kubectl get ing --all-namespaces -o wide
+          echo "Kubernetes cert-manager pods (cert-manager namespace):"
+          kubectl get pods -n cert-manager -o wide
+          echo "Kubernetes ingress-nginx pods (ingress-nginx namespace):"
+          kubectl get pods -n ingress-nginx -o wide
+          echo "Kubernetes resource quotas (all namespaces):"
+          kubectl get resourcequota --all-namespaces
+          echo "Kubernetes limit ranges (all namespaces):"
+          kubectl get limitrange --all-namespaces
