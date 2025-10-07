@@ -3,8 +3,6 @@ resource "digitalocean_kubernetes_cluster" "spm_cluster" {
   region  = var.region
   version = "latest"
 
-  auto_upgrade = true
-
   node_pool {
     name       = "spm-pool"
     size       = var.droplet_size
