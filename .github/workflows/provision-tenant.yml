@@ -56,6 +56,23 @@ jobs:
 
           terraform apply "${ARGS[@]}" -auto-approve
 
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Save kubeconfig
+        run: |
+          set -e
+          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id)
+          echo "Saving kubeconfig for cluster: $CLUSTER_ID"
+          doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
       - name: Install cert-manager
         run: |
           # Install cert-manager using kubectl apply (manifest)
@@ -128,14 +145,16 @@ jobs:
           CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id || true)
           if [ -n "$CLUSTER_ID" ]; then
             doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" || true
+            echo "=== doctl cluster get ==="
+            doctl kubernetes cluster get "$CLUSTER_ID" --output json || true
+            echo "=== ~/.kube/config (head) ==="
+            sed -n '1,200p' ~/.kube/config || true
+            echo "=== kubectl config view (minify) ==="
+            kubectl config view --minify || true
+            echo "=== kubectl current-context ==="
+            kubectl config current-context || true
           else
             echo "cluster_id not available from terraform output"
-          fi
-
-          # Install kubectl if missing
-          if ! command -v kubectl >/dev/null 2>&1; then
-            echo "Installing kubectl"
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
           fi
 
           # Show nodes
