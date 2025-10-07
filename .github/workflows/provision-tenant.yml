@@ -25,7 +25,6 @@ on:
         description: 'Maximum nodes in node pool'
         required: false
         default: '5'
-      # ssh_fingerprint removed (optional node SSH access not used)
 
 jobs:
   provision:
