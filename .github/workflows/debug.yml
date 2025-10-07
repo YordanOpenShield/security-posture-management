@@ -48,6 +48,7 @@ jobs:
           doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
           doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
+        shell: bash
 
       - name: Verify kubectl connectivity
         run: |
