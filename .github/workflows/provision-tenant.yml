@@ -161,7 +161,7 @@ jobs:
         working-directory: ./terraform
         id: tfout
         run: |
-          terraform output -raw cluster_id || true
+          terraform output cluster_id || true
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -190,11 +190,9 @@ jobs:
           doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
           doctl account get --format Email,Status --no-header > debug-output/doctl_account.txt || true
 
-          CLUSTER_RAW=$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null || true)
-          echo "$CLUSTER_RAW" > debug-output/cluster_id_raw.txt
-          CLUSTER_ID=$(echo "$CLUSTER_RAW" | tr -d '\r' | grep -Eo '[0-9a-fA-F-]{36}' | head -n1 || true)
+          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
           if [ -z "$CLUSTER_ID" ]; then
-            echo "no cluster id parsed; saving raw and exiting" | tee -a debug-output/cluster_id_raw.txt
+            echo "no cluster id parsed; saving and exiting" | tee -a debug-output/cluster_id.txt
             tar -czf debug-output.tar.gz -C debug-output . || true
             exit 0
           fi
