@@ -51,4 +51,5 @@ variable "faraday_image" {
 
 locals {
   cluster_name = "spm-${var.tenant}-cluster"
+  cluster_domain = "spm.openshield.io"
 }

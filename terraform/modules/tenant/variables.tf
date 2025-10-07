@@ -118,3 +118,13 @@ variable "faraday_requests" {
     memory = "128Mi"
   }
 }
+
+variable "ingress_hostname" {
+  type    = string
+  default = "${var.tenant}.${local.cluster_domains}"
+}
+
+variable "ingress_tls_secret" {
+  type    = string
+  default = "verystrongsecret"
+}

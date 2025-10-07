@@ -194,3 +194,41 @@ resource "kubernetes_service" "faraday_svc" {
     type = "ClusterIP"
   }
 }
+
+# Optional Ingress to expose services via an Ingress controller (e.g. nginx)
+resource "kubernetes_ingress_v1" "tenant_ingress" {
+  count = 1
+
+  metadata {
+    name      = "${var.tenant}-ingress"
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
+    annotations = {
+      "kubernetes.io/ingress.class" = "nginx"
+      # Use cert-manager annotation if TLS is desired and cert-manager is installed
+      "cert-manager.io/cluster-issuer" = var.ingress_tls_secret != "" ? "letsencrypt-staging" : ""
+    }
+  }
+
+  spec {
+    rule {
+      host = var.ingress_hostname
+      http {
+        path {
+          path     = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.faraday_svc.metadata[0].name
+              port { number = 5985 }
+            }
+          }
+        }
+      }
+    }
+
+    tls {
+      secret_name = var.ingress_tls_secret
+      hosts = [var.ingress_hostname]
+    }
+  }
+}
