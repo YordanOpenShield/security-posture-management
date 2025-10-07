@@ -1,0 +1,108 @@
+name: Provision Tenant (CI-first)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tenant:
+        description: 'Tenant id to provision'
+        required: true
+        default: 'demo'
+      region:
+        description: 'DigitalOcean region'
+        required: false
+        default: 'nyc3'
+      droplet_size:
+        description: 'DO node size slug (node pool)'
+        required: false
+        default: 's-2vcpu-4gb'
+      min_nodes:
+        description: 'Minimum nodes in node pool'
+        required: false
+        default: '1'
+      max_nodes:
+        description: 'Maximum nodes in node pool'
+        required: false
+        default: '5'
+      # ssh_fingerprint removed (optional node SSH access not used)
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    env:
+      # ensure Terraform can use the DO token
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Apply (create cluster)
+        working-directory: ./terraform
+        run: |
+          terraform apply \
+            -var "tenant=${{ github.event.inputs.tenant }}" \
+            -var "region=${{ github.event.inputs.region }}" \
+            -var "droplet_size=${{ github.event.inputs.droplet_size }}" \
+            -var "min_nodes=${{ github.event.inputs.min_nodes }}" \
+            -var "max_nodes=${{ github.event.inputs.max_nodes }}" \
+            -auto-approve
+
+      - name: Fetch kubeconfig from Terraform
+        working-directory: ./terraform
+        run: terraform output -raw kubeconfig > kubeconfig_raw
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          mv terraform/kubeconfig_raw $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Render manifests for tenant
+        run: |
+          TENANT=${{ github.event.inputs.tenant }}
+          mkdir -p rendered
+          for f in k8s/*.yaml; do
+            sed "s/{{TENANT}}/${TENANT}/g" "$f" > rendered/$(basename "$f")
+          done
+
+      - name: Apply manifests
+        run: |
+          kubectl apply -f rendered/namespace.yaml
+          kubectl apply -f rendered/
+
+      - name: Wait and smoke-check
+        run: |
+          NAMESPACE=${{ github.event.inputs.tenant }}
+          kubectl -n $NAMESPACE rollout status deployment/dashboards --timeout=180s || true
+          kubectl -n $NAMESPACE rollout status deployment/opa --timeout=180s || true
+          kubectl -n $NAMESPACE rollout status deployment/faraday --timeout=180s || true
+          kubectl -n $NAMESPACE wait --for=condition=ready pod -l app=opensearch --timeout=300s || true
+          # quick port-forward checks for basic reachability
+          kubectl -n $NAMESPACE port-forward svc/opensearch 9200:9200 2>/dev/null &
+          kubectl -n $NAMESPACE port-forward svc/dashboards 5601:5601 2>/dev/null &
+          kubectl -n $NAMESPACE port-forward svc/opa 8181:8181 2>/dev/null &
+          kubectl -n $NAMESPACE port-forward svc/faraday 5985:5985 2>/dev/null &
+          sleep 8
+          curl --fail --max-time 10 http://127.0.0.1:9200 || echo "opensearch check failed"
+          curl --fail --max-time 10 http://127.0.0.1:5601 || echo "dashboards check failed"
+          curl --fail --max-time 10 http://127.0.0.1:8181 || echo "opa check failed"
+          curl --fail --max-time 10 http://127.0.0.1:5985 || echo "faraday check failed"
+
+      - name: Upload rendered manifests (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests-${{ github.event.inputs.tenant }}
+          path: rendered/
