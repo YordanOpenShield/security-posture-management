@@ -211,7 +211,7 @@ resource "kubernetes_ingress_v1" "tenant_ingress" {
 
   spec {
     rule {
-      host = var.ingress_hostname
+      host = "${var.ingress_hostname}"
       http {
         path {
           path     = "/"

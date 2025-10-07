@@ -2,6 +2,11 @@ variable "tenant" {
   type = string
 }
 
+variable "cluster_domain" {
+  type    = string
+  default = "spm.openshield.io"
+}
+
 variable "opensearch_image" {
   type    = string
   default = "opensearchproject/opensearch:2.9.0"
@@ -119,10 +124,10 @@ variable "faraday_requests" {
   }
 }
 
-data "variables" "root" {}
 variable "ingress_hostname" {
   type    = string
-  default = "${data.variables.root.tenant}.${local.cluster_domain}"
+  default = "${var.tenant}.${var.cluster_domain}"
+  
 }
 
 variable "ingress_tls_secret" {
