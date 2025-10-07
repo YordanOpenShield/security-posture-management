@@ -58,10 +58,12 @@ jobs:
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
+        if: always()
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Save kubeconfig
+        if: always()
         run: |
           set -e
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
@@ -77,6 +79,7 @@ jobs:
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
+        if: always()
         with:
           version: 'latest'
 
