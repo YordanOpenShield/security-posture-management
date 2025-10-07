@@ -109,3 +109,56 @@ jobs:
             git commit -m "chore(terraform): update state for tenant ${{ github.event.inputs.tenant }} [ci skip]"
             git push origin HEAD:$BRANCH
           fi
+
+      - name: Collect cluster debug info
+        if: failure()
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          TENANT: ${{ github.event.inputs.tenant }}
+        run: |
+          set -euo pipefail
+          echo "Collecting debug info for tenant: $TENANT"
+
+          # Install doctl
+          OS=$(uname | tr '[:upper:]' '[:lower:]')
+          ARCH=amd64
+          echo "Installing doctl for ${OS}-${ARCH}"
+          curl -sL "https://github.com/digitalocean/doctl/releases/latest/download/doctl-${OS}-${ARCH}.tar.gz" | tar -xz
+          sudo mv doctl /usr/local/bin
+
+          # Authenticate doctl and save kubeconfig
+          doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
+          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id || true)
+          if [ -n "$CLUSTER_ID" ]; then
+            doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" || true
+          else
+            echo "cluster_id not available from terraform output"
+          fi
+
+          # Install kubectl action (fallback if not available) - use curl to download if missing
+          if ! command -v kubectl >/dev/null 2>&1; then
+            echo "Installing kubectl"
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+          fi
+
+          # Show nodes
+          echo "=== Nodes ==="
+          kubectl get nodes -o wide || true
+
+          echo "=== Pods in tenant namespace ($TENANT) ==="
+          kubectl -n "$TENANT" get pods -o wide || true
+
+          echo "=== Describe pods ==="
+          for p in $(kubectl -n "$TENANT" get pod -o name || true); do
+            echo "----- $p -----"
+            kubectl -n "$TENANT" describe "$p" || true
+            echo "----- logs for $p -----"
+            # try to fetch logs for each container
+            for c in $(kubectl -n "$TENANT" get "$p" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true); do
+              echo "===== container: $c ====="
+              kubectl -n "$TENANT" logs "$p" -c "$c" --tail=200 || true
+            done
+          done
+
+          echo "=== Namespace events ==="
+          kubectl -n "$TENANT" get events --sort-by=.metadata.creationTimestamp || true
