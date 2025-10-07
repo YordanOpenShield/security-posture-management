@@ -137,8 +137,37 @@ jobs:
             git push origin HEAD:$BRANCH
           fi
 
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        if: always()
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        if: always()
+        with:
+          version: 'latest'
+
+      - name: Save kubeconfig
+        if: always()
+        run: |
+          set -e
+          # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
+          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
+          if [ -z "$CLUSTER_ID" ]; then
+            echo "Could not parse cluster_id from terraform output:"
+            echo "cluster_id: $CLUSTER_ID"
+            exit 0
+          fi
+          echo "Saving kubeconfig for cluster: $CLUSTER_ID"
+          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
+
       - name: Collect cluster debug info
-        if: failure()
+        if: always()
         env:
           TENANT: ${{ github.event.inputs.tenant }}
         run: |
