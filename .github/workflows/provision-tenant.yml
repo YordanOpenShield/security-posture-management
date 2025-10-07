@@ -186,7 +186,7 @@ jobs:
             exit 0
           fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
-          doctl kubernetes cluster kubeconfig save $CLUSTER_ID -t $DIGITALOCEAN_TOKEN
+          doctl kubernetes cluster kubeconfig save -t $DIGITALOCEAN_TOKEN $CLUSTER_ID
 
       - name: Collect cluster debug info
         if: always()
