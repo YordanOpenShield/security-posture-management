@@ -1,6 +1,4 @@
 name: Debug Kubernetes Cluster
-permissions:
-  contents: read
 
 on:
   workflow_dispatch:
@@ -19,7 +17,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init -input=false
+        run: terraform init
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -41,7 +39,7 @@ jobs:
           echo "$(terraform -chdir=terraform output -raw cluster_id)"
           echo "$(terraform -chdir=terraform output cluster_id | sed 's/"//g')"
           echo "$(terraform -chdir=terraform output -json cluster_id | sed 's/"//g')"
-          CLUSTER_ID=$(terraform -chdir=terraform output -json cluster_id | sed 's/"//g')
+          CLUSTER_ID="$(terraform -chdir=terraform output -json cluster_id | sed 's/"//g')"
           if [ -z "$CLUSTER_ID" ]; then
             echo "Could not parse cluster_id from terraform output:"
             echo "cluster_id: $CLUSTER_ID"
