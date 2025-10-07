@@ -14,7 +14,7 @@ provider "digitalocean" {
 resource "digitalocean_kubernetes_cluster" "spm_cluster" {
   name    = local.cluster_name
   region  = var.region
-  version = "1.29.4-do.2"
+  version = "latest"
 
   auto_upgrade = true
 
