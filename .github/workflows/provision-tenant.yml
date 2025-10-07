@@ -75,7 +75,7 @@ jobs:
             exit 0
           fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
-          doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
+          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
