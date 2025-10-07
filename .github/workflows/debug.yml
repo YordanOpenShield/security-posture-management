@@ -34,16 +34,16 @@ jobs:
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          echo "$(terraform -chdir=terraform output cluster_id)"
-          echo "$(terraform -chdir=terraform output -json cluster_id)"
-          echo "$(terraform -chdir=terraform output -raw cluster_id)"
-          echo "$(terraform -chdir=terraform output cluster_id | sed 's/"//g')"
-          echo "$(terraform -chdir=terraform output -json cluster_id | sed 's/"//g')"
+          echo "$(terraform -chdir=terraform output cluster_id 2>/dev/null)"
+          echo "$(terraform -chdir=terraform output -json cluster_id 2>/dev/null)"
+          echo "$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null)"
+          echo "$(terraform -chdir=terraform output cluster_id 2>/dev/null | sed 's/"//g')"
+          echo "$(terraform -chdir=terraform output -json cluster_id 2>/dev/null | sed 's/"//g')"
           CLUSTER_ID="$(terraform -chdir=terraform output -json cluster_id 2>/dev/null | sed 's/"//g')"
           if [ -z "$CLUSTER_ID" ]; then
             echo "Could not parse cluster_id from terraform output:"
             echo "cluster_id: $CLUSTER_ID"
-            exit 0
+            exit 1
           fi
           doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
