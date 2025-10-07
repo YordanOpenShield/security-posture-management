@@ -31,6 +31,24 @@ variable "max_nodes" {
   default     = 5
 }
 
+variable "opensearch_image" {
+  description = "OpenSearch image"
+  type        = string
+  default     = "opensearchproject/opensearch:2.9.0"
+}
+
+variable "opa_image" {
+  description = "OPA image"
+  type        = string
+  default     = "openpolicyagent/opa:0.54.0"
+}
+
+variable "faraday_image" {
+  description = "Faraday image"
+  type        = string
+  default     = "faradaysec/faraday:latest"
+}
+
 locals {
   cluster_name = "spm-${var.tenant}-cluster"
 }
