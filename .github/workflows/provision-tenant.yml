@@ -1,4 +1,4 @@
-name: Provision Tenant (CI-first)
+name: Provision Tenant
 permissions:
   contents: write
 

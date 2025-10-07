@@ -6,6 +6,9 @@ module "tenant" {
   # for CI-first provisioning.
   tenant = var.tenant
 
+  # ingress
+  ingress_hostname = "${var.tenant}.${local.cluster_domain}"
+
   # images (can be overridden via root variables)
   opensearch_image = var.opensearch_image
   opa_image         = var.opa_image
