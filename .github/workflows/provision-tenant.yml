@@ -71,7 +71,7 @@ jobs:
 
       - name: Save kubeconfig
         if: always()
-        needs:
+        depends-on:
           - Install doctl
           - Install kubectl
         run: |
@@ -126,7 +126,7 @@ jobs:
 
       - name: Commit Terraform state back to repo
         if: always()
-        needs:
+        depends-on:
           - Install doctl
           - Install kubectl
           - Save kubeconfig
