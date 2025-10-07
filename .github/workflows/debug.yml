@@ -15,7 +15,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0
+          terraform_version: 1.12.0
 
       - name: Terraform Init
         working-directory: ./terraform
@@ -37,7 +37,8 @@ jobs:
         run: |
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
           echo "$(terraform -chdir=terraform output -json cluster_id)"
-          CLUSTER_ID=$(terraform -chdir=terraform output -json cluster_id | jq -r '.cluster_id.value')
+          echo "$(terraform -chdir=terraform output -raw cluster_id)"
+          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id)
           if [ -z "$CLUSTER_ID" ]; then
             echo "Could not parse cluster_id from terraform output:"
             echo "cluster_id: $CLUSTER_ID"
