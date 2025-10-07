@@ -137,12 +137,6 @@ jobs:
             git push origin HEAD:$BRANCH
           fi
 
-      - name: Install doctl (action)
-        if: failure()
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-
       - name: Collect cluster debug info
         if: failure()
         env:
@@ -152,8 +146,7 @@ jobs:
           echo "Collecting debug info for tenant: $TENANT"
 
           # Try to get cluster id from terraform outputs and save kubeconfig
-          CLUSTER_ID_RAW=$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null || true)
-          CLUSTER_ID=$(echo "$CLUSTER_ID_RAW" | tr -d '\r' | grep -Eo '[0-9a-fA-F-]{36}' | head -n1 || true)
+          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
           if [ -n "$CLUSTER_ID" ]; then
             doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" || true
             echo "=== doctl cluster get ==="
