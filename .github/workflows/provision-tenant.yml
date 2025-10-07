@@ -69,6 +69,20 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
+      - name: Authenticate doctl (provision job)
+        if: always()
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+        run: |
+          set -e
+          if [ -z "${DIGITALOCEAN_TOKEN:-}" ]; then
+            echo "DIGITALOCEAN_TOKEN not set; doctl auth will fail"
+          else
+            # Ensure doctl is configured for subsequent run steps in this job
+            doctl auth init --access-token "$DIGITALOCEAN_TOKEN" >/dev/null 2>&1 || true
+            doctl account get || true
+          fi
+
       - name: Save kubeconfig
         if: always()
         run: |
@@ -161,6 +175,18 @@ jobs:
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Authenticate doctl (debug job)
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+        run: |
+          set -e
+          if [ -z "${DIGITALOCEAN_TOKEN:-}" ]; then
+            echo "DIGITALOCEAN_TOKEN not set; doctl auth will fail"
+          else
+            # doctl auth init --access-token "$DIGITALOCEAN_TOKEN" >/dev/null 2>&1 || true
+            doctl account get || true
+          fi
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
