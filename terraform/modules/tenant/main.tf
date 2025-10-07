@@ -211,7 +211,7 @@ resource "kubernetes_ingress_v1" "tenant_ingress" {
 
   spec {
     rule {
-      host = "${var.ingress_hostname}"
+      host = "${var.tenant}.${var.cluster_domain}"
       http {
         path {
           path     = "/"
@@ -228,7 +228,7 @@ resource "kubernetes_ingress_v1" "tenant_ingress" {
 
     tls {
       secret_name = var.ingress_tls_secret
-      hosts = [var.ingress_hostname]
+      hosts = ["${var.tenant}.${var.cluster_domain}"]
     }
   }
 }

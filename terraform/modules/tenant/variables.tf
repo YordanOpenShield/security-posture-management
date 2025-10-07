@@ -124,12 +124,6 @@ variable "faraday_requests" {
   }
 }
 
-variable "ingress_hostname" {
-  type    = string
-  default = "${var.tenant}.${var.cluster_domain}"
-  
-}
-
 variable "ingress_tls_secret" {
   type    = string
   default = "verystrongsecret"

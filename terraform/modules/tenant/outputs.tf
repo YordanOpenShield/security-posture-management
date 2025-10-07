@@ -15,7 +15,7 @@ output "faraday_service" {
 }
 
 output "ingress_hostname" {
-  value = var.ingress_hostname
+  value = "${var.tenant}.${var.cluster_domain}"
 }
 
 output "ingress_tls_secret" {
