@@ -41,7 +41,7 @@ jobs:
 
       - name: Terraform Apply (create cluster)
         working-directory: ./terraform
-        if: github.event.inputs.tenant != ''
+        if: github.event.inputs.tenant != 'skip'
         run: |
           set -e
           # Build terraform -var arguments conditionally from workflow inputs
