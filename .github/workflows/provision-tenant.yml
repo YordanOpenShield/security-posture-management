@@ -64,7 +64,14 @@ jobs:
       - name: Save kubeconfig
         run: |
           set -e
-          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id)
+          # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
+          CLUSTER_ID_RAW=$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null || true)
+          CLUSTER_ID=$(echo "$CLUSTER_ID_RAW" | tr -d '\r' | grep -Eo '[0-9a-fA-F-]{36}' | head -n1 || true)
+          if [ -z "$CLUSTER_ID" ]; then
+            echo "Could not parse cluster_id from terraform output:"
+            echo "$CLUSTER_ID_RAW"
+            exit 0
+          fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
           doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
 
@@ -142,7 +149,8 @@ jobs:
           echo "Collecting debug info for tenant: $TENANT"
 
           # Try to get cluster id from terraform outputs and save kubeconfig
-          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id || true)
+          CLUSTER_ID_RAW=$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null || true)
+          CLUSTER_ID=$(echo "$CLUSTER_ID_RAW" | tr -d '\r' | grep -Eo '[0-9a-fA-F-]{36}' | head -n1 || true)
           if [ -n "$CLUSTER_ID" ]; then
             doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" || true
             echo "=== doctl cluster get ==="
