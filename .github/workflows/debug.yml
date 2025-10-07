@@ -42,9 +42,9 @@ jobs:
             echo "cluster_id: CLUSTER_ID"
             exit 0
           fi
-          doctl Auth init --access-token "$DIGITALOCEAN_TOKEN"
+          doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
           echo "Saving kubeconfig for cluster: CLUSTER_ID"
-          doctl kubernetes cluster kubeconfig save "CLUSTER_ID"
+          doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
 
       - name: Verify kubectl connectivity
         run: |
