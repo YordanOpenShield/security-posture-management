@@ -194,7 +194,3 @@ resource "kubernetes_service" "faraday_svc" {
     type = "ClusterIP"
   }
 }
-
-output "namespace" {
-  value = kubernetes_namespace.tenant_ns.metadata[0].name
-}
