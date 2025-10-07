@@ -8,7 +8,7 @@ on:
       tenant:
         description: 'Tenant id to provision'
         required: true
-        default: 'demo'
+        default: 'skip'
       quota_hard:
         description: 'Optional ResourceQuota map (HCL map syntax) e.g. {"pods"="20","requests.cpu"="4"}'
         required: false
