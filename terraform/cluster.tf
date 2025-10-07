@@ -9,7 +9,7 @@ resource "digitalocean_kubernetes_cluster" "spm_cluster" {
   auto_upgrade = true
 
   node_pool {
-    name       = "spm-pool"
+    name       = "spm-node-pool"
     size       = var.droplet_size
     node_count = var.min_nodes
     auto_scale = true
@@ -17,5 +17,5 @@ resource "digitalocean_kubernetes_cluster" "spm_cluster" {
     max_nodes  = var.max_nodes
   }
 
-  tags = ["spm", var.tenant]
+  tags = ["spm"]
 }
