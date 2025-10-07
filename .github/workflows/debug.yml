@@ -39,8 +39,7 @@ jobs:
           echo "$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null)"
           echo "$(terraform -chdir=terraform output cluster_id 2>/dev/null | sed 's/\"//g')"
           echo "$(terraform -chdir=terraform output -json cluster_id 2>/dev/null | sed 's/\"//g')"
-          TERRAFORM_CMD="terraform -chdir=terraform output cluster_id 2>/dev/null | sed 's/\"//g'"
-          CLUSTER_ID="$(echo "$(terraform -chdir=terraform output cluster_id 2>/dev/null | sed 's/\"//g')")"
+          CLUSTER_ID=$(terraform -chdir=terraform output -raw cluster_id)
           doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
           doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
