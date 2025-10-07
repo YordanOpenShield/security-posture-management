@@ -111,8 +111,8 @@ variable "opa_requests" {
 variable "faraday_limits" {
   type = map(string)
   default = {
-    cpu = "500m"
-    memory = "512Mi"
+    cpu = "1"
+    memory = "2Gi"
   }
 }
 
