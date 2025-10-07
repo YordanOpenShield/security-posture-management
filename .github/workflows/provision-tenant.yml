@@ -57,17 +57,17 @@ jobs:
 
           terraform apply "${ARGS[@]}" -auto-approve
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        if: always()
-        with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         if: always()
         with:
           version: 'latest'
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        if: always()
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Save kubeconfig
         if: always()
@@ -155,17 +155,17 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        if: always()
-        with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         if: always()
         with:
           version: 'latest'
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        if: always()
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
       - name: Save kubeconfig
         if: always()
