@@ -68,12 +68,10 @@ jobs:
         run: |
           set -e
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          CLUSTER_ID_RAW=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
-          echo "Raw cluster_id from terraform: $CLUSTER_ID_RAW"
-          CLUSTER_ID=$(echo "$CLUSTER_ID_RAW" | tr -d '\r' | grep -Eo '[0-9a-fA-F-]{36}' | head -n1 || true)
+          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
           if [ -z "$CLUSTER_ID" ]; then
             echo "Could not parse cluster_id from terraform output:"
-            echo "$CLUSTER_ID_RAW"
+            echo "cluster_id: $CLUSTER_ID"
             exit 0
           fi
           echo "Saving kubeconfig for cluster: $CLUSTER_ID"
