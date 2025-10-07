@@ -33,6 +33,8 @@ jobs:
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
+          set -e
+          set +x
           # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
           echo "$(terraform -chdir=terraform output cluster_id 2>/dev/null)"
           echo "$(terraform -chdir=terraform output -json cluster_id 2>/dev/null)"
