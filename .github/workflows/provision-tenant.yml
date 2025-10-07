@@ -1,4 +1,6 @@
 name: Provision Tenant (CI-first)
+permissions:
+  contents: write
 
 on:
   workflow_dispatch:
@@ -131,3 +133,76 @@ jobs:
         with:
           name: rendered-manifests-${{ github.event.inputs.tenant }}
           path: rendered/
+
+      - name: Upload terraform state (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-${{ github.event.inputs.tenant }}
+          path: |
+            terraform/terraform.tfstate
+            terraform/terraform.tfstate.backup
+
+
+  persist-state:
+    needs: [provision]
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download terraform-state artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state-${{ github.event.inputs.tenant }}
+          path: terraform_state_artifact
+
+      - name: Commit terraform state back to repo
+        run: |
+          set -e
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          # copy downloaded state (if present)
+          if [ -f terraform_state_artifact/terraform/terraform.tfstate ]; then
+            mkdir -p terraform
+            cp terraform_state_artifact/terraform/terraform.tfstate terraform/terraform.tfstate
+          fi
+          if [ -f terraform_state_artifact/terraform/terraform.tfstate.backup ]; then
+            mkdir -p terraform
+            cp terraform_state_artifact/terraform/terraform.tfstate.backup terraform/terraform.tfstate.backup
+          fi
+          git add terraform/terraform.tfstate terraform/terraform.tfstate.backup || true
+          if git diff --staged --quiet; then
+            echo "No state changes to commit"
+          else
+            git commit -m "chore(terraform): update state for tenant ${{ github.event.inputs.tenant }} [ci skip]"
+            git push origin HEAD:${GITHUB_REF#refs/heads/}
+          fi
+      - name: Upload terraform state (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-${{ github.event.inputs.tenant }}
+          path: |
+            terraform/terraform.tfstate
+            terraform/terraform.tfstate.backup
+
+
+      - name: Commit Terraform state back to repo
+        if: always()
+        run: |
+          set -e
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          BRANCH=${GITHUB_REF#refs/heads/}
+          echo "Branch: $BRANCH"
+          git add terraform/terraform.tfstate terraform/terraform.tfstate.backup || true
+          if git diff --staged --quiet; then
+            echo "No state changes to commit"
+          else
+            git commit -m "chore(terraform): update state for tenant ${{ github.event.inputs.tenant }} [ci skip]"
+            git push origin HEAD:$BRANCH
+          fi
