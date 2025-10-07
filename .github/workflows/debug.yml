@@ -1,0 +1,74 @@
+name: Provision Tenant
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init -input=false
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Save kubeconfig
+        run: |
+          # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
+          CLUSTER_NAME=$(terraform -chdir=terraform output cluster_name 2>/dev/null)
+          if [ -z "$CLUSTER_NAME" ]; then
+            echo "Could not parse cluster_name from terraform output:"
+            echo "cluster_name: $CLUSTER_NAME"
+            exit 0
+          fi
+          echo "Saving kubeconfig for cluster: $CLUSTER_NAME"
+          doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
+
+      - name: Verify kubectl connectivity
+        run: |
+          kubectl get nodes
+          kubectl get pods --all-namespaces
+          kubectl get svc --all-namespaces
+      
+      - name: Debug Info
+        run: |
+          echo "Kubernetes context:"
+          kubectl config current-context
+          echo "Kubernetes nodes:"
+          kubectl get nodes -o wide
+          echo "Kubernetes all namespaces pods:"
+          kubectl get pods --all-namespaces -o wide
+          echo "Kubernetes all namespaces services:"
+          kubectl get svc --all-namespaces -o wide
+          echo "Kubernetes all namespaces ingresses:"
+          kubectl get ing --all-namespaces -o wide
+          echo "Kubernetes cert-manager pods (cert-manager namespace):"
+          kubectl get pods -n cert-manager -o wide
+          echo "Kubernetes ingress-nginx pods (ingress-nginx namespace):"
+          kubectl get pods -n ingress-nginx -o wide
+          echo "Kubernetes resource quotas (all namespaces):"
+          kubectl get resourcequota --all-namespaces
+          echo "Kubernetes limit ranges (all namespaces):"
+          kubectl get limitrange --all-namespaces
