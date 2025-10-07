@@ -139,9 +139,14 @@ jobs:
 
   debug:
     runs-on: ubuntu-latest
+    needs: [provision]
+    if: always()
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -150,76 +155,93 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -input=false
 
-      - name: Terraform Output
+      - name: Terraform Output (raw cluster_id)
         working-directory: ./terraform
-        run: terraform output
-
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
+        id: tfout
+        run: |
+          terraform output -raw cluster_id || true
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_TOKEN }}
 
-      - name: Save kubeconfig
-        run: |
-          # Capture terraform output and extract a UUID-like cluster id to avoid wrapper/debug noise
-          terraform -chdir=terraform output cluster_id
-          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null)
-          if [ -z "$CLUSTER_ID" ]; then
-            echo "Could not parse cluster_id from terraform output:"
-            echo "cluster_id: $CLUSTER_ID"
-            exit 0
-          fi
-          echo "Saving kubeconfig for cluster: $CLUSTER_ID"
-          doctl kubernetes cluster kubeconfig save $CLUSTER_ID
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
 
-      - name: Collect cluster debug info
+      - name: Collect cluster debug files
         env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
           TENANT: ${{ github.event.inputs.tenant }}
         run: |
           set -euo pipefail
-          echo "Collecting debug info for tenant: $TENANT"
+          mkdir -p debug-output
+          echo "DEBUG START: $(date)" > debug-output/collected_at.txt
 
-          # Try to get cluster id from terraform outputs and save kubeconfig
-          CLUSTER_ID=$(terraform -chdir=terraform output cluster_id 2>/dev/null || true)
-          if [ -n "$CLUSTER_ID" ]; then
-            doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" || true
-            echo "=== doctl cluster get ==="
-            doctl kubernetes cluster get "$CLUSTER_ID" --output json || true
-            echo "=== ~/.kube/config (head) ==="
-            sed -n '1,200p' ~/.kube/config || true
-            echo "=== kubectl config view (minify) ==="
-            kubectl config view --minify || true
-            echo "=== kubectl current-context ==="
-            kubectl config current-context || true
-          else
-            echo "cluster_id not available from terraform output"
+          if [ -z "${DIGITALOCEAN_TOKEN:-}" ]; then
+            echo "DIGITALOCEAN_TOKEN missing - aborting debug collection" | tee debug-output/error.txt
+            exit 0
           fi
 
-          # Show nodes
-          echo "=== Nodes ==="
-          kubectl get nodes -o wide || true
+          doctl auth init --access-token "$DIGITALOCEAN_TOKEN"
+          doctl account get --format Email,Status --no-header > debug-output/doctl_account.txt || true
 
-          echo "=== Pods in tenant namespace ($TENANT) ==="
-          kubectl -n "$TENANT" get pods -o wide || true
+          CLUSTER_RAW=$(terraform -chdir=terraform output -raw cluster_id 2>/dev/null || true)
+          echo "$CLUSTER_RAW" > debug-output/cluster_id_raw.txt
+          CLUSTER_ID=$(echo "$CLUSTER_RAW" | tr -d '\r' | grep -Eo '[0-9a-fA-F-]{36}' | head -n1 || true)
+          if [ -z "$CLUSTER_ID" ]; then
+            echo "no cluster id parsed; saving raw and exiting" | tee -a debug-output/cluster_id_raw.txt
+            tar -czf debug-output.tar.gz -C debug-output . || true
+            exit 0
+          fi
+          echo "$CLUSTER_ID" > debug-output/cluster_id.txt
 
-          echo "=== Describe pods ==="
-          for p in $(kubectl -n "$TENANT" get pod -o name || true); do
-            echo "----- $p -----"
-            kubectl -n "$TENANT" describe "$p" || true
-            echo "----- logs for $p -----"
-            # try to fetch logs for each container
-            for c in $(kubectl -n "$TENANT" get "$p" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true); do
-              echo "===== container: $c ====="
-              kubectl -n "$TENANT" logs "$p" -c "$c" --tail=200 || true
+          doctl kubernetes cluster kubeconfig save "$CLUSTER_ID" --context "do-$CLUSTER_ID" || true
+
+          kubectl config view --minify > debug-output/kubeconfig_minify.yaml || true
+          kubectl config current-context > debug-output/current_context.txt || true
+          kubectl cluster-info > debug-output/cluster_info.txt 2>&1 || true
+
+          kubectl get nodes -o wide > debug-output/nodes.txt 2>&1 || true
+          kubectl describe nodes > debug-output/nodes_describe.txt 2>&1 || true
+
+          NAMESPACE="${TENANT}"
+          kubectl get ns "$NAMESPACE" -o yaml > debug-output/namespace_yaml.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get pods -o wide > debug-output/pods.txt 2>&1 || true
+
+          mkdir -p debug-output/pod-details
+          for P in $(kubectl -n "$NAMESPACE" get pod -o name --no-headers 2>/dev/null || true); do
+            PN=$(basename "$P")
+            kubectl -n "$NAMESPACE" describe pod "$PN" > debug-output/pod-details/"$PN".describe.txt 2>&1 || true
+            CONTAINERS=$(kubectl -n "$NAMESPACE" get pod "$PN" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true)
+            for C in $CONTAINERS; do
+              kubectl -n "$NAMESPACE" logs "$PN" -c "$C" --tail=500 > debug-output/pod-details/"$PN"."$C".logs.txt 2>&1 || true
+              kubectl -n "$NAMESPACE" logs "$PN" -c "$C" --previous --tail=200 > debug-output/pod-details/"$PN"."$C".logs_prev.txt 2>&1 || true
             done
           done
 
-          echo "=== Namespace events ==="
-          kubectl -n "$TENANT" get events --sort-by=.metadata.creationTimestamp || true
+          kubectl -n "$NAMESPACE" get deployments -o wide > debug-output/deployments.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get statefulsets -o wide > debug-output/statefulsets.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get svc -o wide > debug-output/services.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get ing -o wide > debug-output/ingress.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get pvc -o wide > debug-output/pvcs.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" describe pvc >> debug-output/pvc_describe.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get events --sort-by=.metadata.creationTimestamp > debug-output/events.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" get endpoints -o wide > debug-output/endpoints.txt 2>&1 || true
+
+          kubectl top nodes > debug-output/top_nodes.txt 2>&1 || true
+          kubectl -n "$NAMESPACE" top pods > debug-output/top_pods.txt 2>&1 || true
+
+          cp -v terraform/terraform.tfstate debug-output/terraform.tfstate || true
+
+          tar -czf debug-output.tar.gz -C debug-output . || true
+
+      - name: Upload debug-output
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-output-${{ github.event.inputs.tenant }}
+          path: debug-output.tar.gz
