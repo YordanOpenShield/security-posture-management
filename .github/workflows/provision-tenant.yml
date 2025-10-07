@@ -21,8 +21,6 @@ on:
 jobs:
   provision:
     runs-on: ubuntu-latest
-    env:
-      TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +40,8 @@ jobs:
       - name: Terraform Apply (create cluster)
         working-directory: ./terraform
         if: github.event.inputs.tenant != 'skip'
+        env:
+          TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           set -e
           # Build terraform -var arguments conditionally from workflow inputs
@@ -140,6 +140,21 @@ jobs:
   debug:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         if: always()
