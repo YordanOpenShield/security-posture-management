@@ -92,6 +92,12 @@ resource "kubernetes_deployment" "faraday" {
       }
     }
   }
+
+  depends_on = [
+    kubernetes_stateful_set.opensearch,
+    kubernetes_stateful_set.postgres,
+    kubernetes_job.initdb
+  ]
 }
 
 resource "kubernetes_job" "initdb" {
