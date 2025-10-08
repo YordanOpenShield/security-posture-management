@@ -1,6 +1,6 @@
 # Cluster DNS record
 resource "cloudflare_dns_record" "spm_cluster" {
-  zone_id = data.cloudflare_zone.openshield_zone.id
+  zone_id = data.cloudflare_zone.openshield_zone.zone_id
   name    = var.cluster_domain
   content = digitalocean_kubernetes_cluster.spm_cluster.ipv4_address
   ttl     = 3600
@@ -12,7 +12,7 @@ resource "cloudflare_dns_record" "spm_cluster" {
 
 # Tenant DNS record
 resource "cloudflare_dns_record" "tenant" {
-  zone_id = data.cloudflare_zone.openshield_zone.id
+  zone_id = data.cloudflare_zone.openshield_zone.zone_id
   name    = "${var.tenant}.${var.cluster_domain}"
   content = digitalocean_kubernetes_cluster.spm_cluster.ipv4_address
   ttl     = 3600
