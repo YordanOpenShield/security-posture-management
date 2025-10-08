@@ -8,7 +8,7 @@ on:
       tenant:
         description: 'Tenant id to provision'
         required: true
-        default: 'skip'
+        default: 'demo'
       quota_hard:
         description: 'Optional ResourceQuota map (HCL map syntax) e.g. {"pods"="20","requests.cpu"="4"}'
         required: false
@@ -39,7 +39,6 @@ jobs:
 
       - name: Terraform Apply (create cluster)
         working-directory: ./terraform
-        if: github.event.inputs.tenant != 'skip'
         env:
           TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
           TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
