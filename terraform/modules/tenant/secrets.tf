@@ -9,7 +9,7 @@ resource "random_password" "rabbitmq_password" {
 resource "kubernetes_secret" "faraday_db_auth" {
   metadata {
     name      = "faraday-db-secret"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   data = {
     POSTGRES_DB       = base64encode("faraday")
@@ -22,7 +22,7 @@ resource "kubernetes_secret" "faraday_db_auth" {
 resource "kubernetes_secret" "rabbitmq_auth" {
   metadata {
     name      = "faraday-rabbitmq-secret"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   data = {
     RABBITMQ_DEFAULT_USER = base64encode("faraday")
@@ -38,7 +38,7 @@ resource "random_password" "opensearch_admin_pass" {
 resource "kubernetes_secret" "opensearch_admin_auth" {
   metadata {
     name      = "opensearch-admin-secret"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   data = {
     OPENSEARCH_PASSWORD = base64encode(random_password.opensearch_admin_pass.result)

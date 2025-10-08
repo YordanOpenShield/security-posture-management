@@ -1,7 +1,7 @@
 resource "kubernetes_service" "rabbitmq" {
   metadata {
     name      = "rabbitmq"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     selector = { app = "rabbitmq" }
@@ -15,7 +15,7 @@ resource "kubernetes_service" "rabbitmq" {
 resource "kubernetes_persistent_volume_claim" "rabbitmq" {
   metadata {
     name      = "rabbitmq-data"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     access_modes = ["ReadWriteOnce"]
@@ -28,7 +28,7 @@ resource "kubernetes_persistent_volume_claim" "rabbitmq" {
 resource "kubernetes_deployment" "rabbitmq" {
   metadata {
     name      = "rabbitmq"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
 
   spec {

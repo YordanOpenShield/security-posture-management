@@ -1,7 +1,7 @@
 resource "kubernetes_service" "postgres" {
   metadata {
     name      = "postgres"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     selector = { app = "postgres" }
@@ -16,7 +16,7 @@ resource "kubernetes_service" "postgres" {
 resource "kubernetes_persistent_volume_claim" "postgres" {
   metadata {
     name      = "postgres-data"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     access_modes = ["ReadWriteOnce"]
@@ -29,7 +29,7 @@ resource "kubernetes_persistent_volume_claim" "postgres" {
 resource "kubernetes_stateful_set" "postgres" {
   metadata {
     name      = "postgres"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
 
   spec {
@@ -57,7 +57,7 @@ resource "kubernetes_stateful_set" "postgres" {
             name = "POSTGRES_DB"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.faraday_db.metadata[0].name
+                name = kubernetes_secret.faraday_db_auth.metadata[0].name
                 key  = "POSTGRES_DB"
               }
             }
@@ -66,7 +66,7 @@ resource "kubernetes_stateful_set" "postgres" {
             name = "POSTGRES_USER"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.faraday_db.metadata[0].name
+                name = kubernetes_secret.faraday_db_auth.metadata[0].name
                 key  = "POSTGRES_USER"
               }
             }
@@ -75,7 +75,7 @@ resource "kubernetes_stateful_set" "postgres" {
             name = "POSTGRES_PASSWORD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.faraday_db.metadata[0].name
+                name = kubernetes_secret.faraday_db_auth.metadata[0].name
                 key  = "POSTGRES_PASSWORD"
               }
             }

@@ -1,7 +1,7 @@
 resource "kubernetes_service" "faraday" {
   metadata {
     name      = "faraday"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     selector = { app = "faraday" }
@@ -15,7 +15,7 @@ resource "kubernetes_service" "faraday" {
 resource "kubernetes_persistent_volume_claim" "faraday_storage" {
   metadata {
     name      = "faraday-storage"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     access_modes = ["ReadWriteOnce"]
@@ -28,7 +28,7 @@ resource "kubernetes_persistent_volume_claim" "faraday_storage" {
 resource "kubernetes_deployment" "faraday" {
   metadata {
     name      = "faraday"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
 
   spec {
@@ -63,7 +63,7 @@ resource "kubernetes_deployment" "faraday" {
             name  = "PGSQL_PASSWD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.faraday_db.metadata[0].name
+                name = kubernetes_secret.faraday_db_auth.metadata[0].name
                 key  = "POSTGRES_PASSWORD"
               }
             }
@@ -97,7 +97,7 @@ resource "kubernetes_deployment" "faraday" {
 resource "kubernetes_job" "initdb" {
   metadata {
     name      = "faraday-initdb"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
 
   spec {
@@ -128,7 +128,7 @@ resource "kubernetes_job" "initdb" {
             name  = "PGSQL_PASSWD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.faraday_db.metadata[0].name
+                name = kubernetes_secret.faraday_db_auth.metadata[0].name
                 key  = "POSTGRES_PASSWORD"
               }
             }

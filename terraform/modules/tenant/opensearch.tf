@@ -1,7 +1,7 @@
 resource "kubernetes_persistent_volume_claim" "opensearch_data" {
   metadata {
     name      = "opensearch-data"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     access_modes = ["ReadWriteOnce"]
@@ -16,7 +16,7 @@ resource "kubernetes_persistent_volume_claim" "opensearch_data" {
 resource "kubernetes_service" "opensearch" {
   metadata {
     name      = "opensearch"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   spec {
     selector = {
@@ -38,7 +38,7 @@ resource "kubernetes_service" "opensearch" {
 resource "kubernetes_stateful_set" "opensearch" {
   metadata {
     name      = "opensearch"
-    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
     labels = {
       app = "opensearch"
     }
