@@ -104,7 +104,7 @@ resource "kubernetes_stateful_set" "opensearch" {
             name = "OPENSEARCH_INITIAL_ADMIN_PASSWORD"
             value_from {
               secret_key_ref {
-                name = kubernetes_secret.opensearch_auth.metadata[0].name
+                name = kubernetes_secret.opensearch_admin_auth.metadata[0].name
                 key  = "OPENSEARCH_INITIAL_ADMIN_PASSWORD"
               }
             }
