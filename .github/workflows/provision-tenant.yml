@@ -9,6 +9,10 @@ on:
         description: 'Tenant id to provision'
         required: true
         default: 'demo'
+      destroy:
+        description: 'Set to true to destroy the tenant instead of creating/updating it'
+        required: false
+        default: 'false'
       quota_hard:
         description: 'Optional ResourceQuota map (HCL map syntax) e.g. {"pods"="20","requests.cpu"="4"}'
         required: false
@@ -39,6 +43,7 @@ jobs:
 
       - name: Terraform Apply (create cluster)
         working-directory: ./terraform
+        if: ${{ github.event.inputs.destroy != 'true' }}
         env:
           TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
           TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
@@ -56,6 +61,16 @@ jobs:
           fi
 
           terraform apply "${ARGS[@]}" -auto-approve
+
+      - name: Terraform Destroy (destroy cluster)
+        working-directory: ./terraform
+        if: ${{ github.event.inputs.destroy == 'true' }}
+        env:
+          TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
+        run: |
+          set -e
+          terraform destroy -target=module.tenant -var "tenant=${{ github.event.inputs.tenant }}" -auto-approve
 
       - name: Upload terraform state (artifact)
         if: always()
