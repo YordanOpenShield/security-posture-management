@@ -11,6 +11,11 @@ variable "opensearch_image" {
   default = "opensearchproject/opensearch:latest"
 }
 
+variable "opensearch_dashboards_image" {
+  type    = string
+  default = "opensearchproject/opensearch-dashboards:2.13.0"
+}
+
 variable "faraday_image" {
   type    = string
   default = "faradaysec/faraday:latest"
@@ -95,6 +100,22 @@ variable "opensearch_requests" {
   default = {
     cpu = "500m"
     memory = "1Gi"
+  }
+}
+
+variable "opensearch_dashboards_limits" {
+  type = map(string)
+  default = {
+    cpu = "500m"
+    memory = "512Mi"
+  }
+}
+
+variable "opensearch_dashboards_requests" {
+  type = map(string)
+  default = {
+    cpu = "200m"
+    memory = "256Mi"
   }
 }
 
