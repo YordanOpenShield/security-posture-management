@@ -11,7 +11,7 @@ on:
         default: 'demo'
       destroy:
         type: boolean
-        description: 'Set to true to destroy the tenant instead of creating/updating it'
+        description: 'Destroy tenant'
         required: false
         default: 'false'
       quota_hard:
