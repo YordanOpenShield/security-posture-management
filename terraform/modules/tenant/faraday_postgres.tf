@@ -45,12 +45,36 @@ resource "kubernetes_stateful_set" "postgres" {
         labels = { app = "postgres" }
       }
       spec {
+        # Run Postgres as the standard postgres UID and ensure group ownership of the
+        # data directory so initdb can run even if the PV contains root-owned folders.
+        security_context {
+          run_as_user = 70
+          fs_group     = 70
+        }
+
+        # Init container: create PGDATA subdirectory and chown it. This avoids
+        # initdb failing when the volume root contains items like lost+found.
+        init_container {
+          name  = "init-pgdata"
+          image = "busybox:1.36"
+          command = ["sh", "-c", "mkdir -p /var/lib/postgresql/data/pgdata && chown -R 70:70 /var/lib/postgresql/data || true"]
+          volume_mount {
+            name       = "postgres-data"
+            mount_path = "/var/lib/postgresql/data"
+          }
+        }
+
         container {
           name  = "postgres"
           image = "postgres:16-alpine"
 
           port {
             container_port = 5432
+          }
+
+          env {
+            name  = "PGDATA"
+            value = "/var/lib/postgresql/data/pgdata"
           }
 
           env {

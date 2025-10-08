@@ -62,6 +62,14 @@ resource "kubernetes_stateful_set" "opensearch" {
       }
 
       spec {
+        # Pod-level security context: run OpenSearch as UID 1000 and set fsGroup so the
+        # kubelet ensures the volume has group write for that GID. This helps when PV
+        # mounts contain root-owned directories like lost+found.
+        security_context {
+          run_as_user = 1000
+          fs_group     = 1000
+        }
+
         # Optional init container to set sysctl (if allowed by node policy)
         init_container {
           name  = "init-sysctl"
@@ -69,6 +77,20 @@ resource "kubernetes_stateful_set" "opensearch" {
           command = ["sh", "-c", "sysctl -w vm.max_map_count=262144"]
           security_context {
             privileged = true
+          }
+        }
+
+        # Ensure the data directory is owned by the OpenSearch user (uid:1000).
+        # Some storage implementations mount a filesystem with root-owned dirs
+        # (eg. lost+found). This init container runs as root and fixes ownership so
+        # OpenSearch can write into the data path.
+        init_container {
+          name  = "chown-data"
+          image = "busybox:1.36"
+          command = ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data || true"]
+          volume_mount {
+            name       = "opensearch-data"
+            mount_path = "/usr/share/opensearch/data"
           }
         }
 

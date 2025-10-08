@@ -41,7 +41,7 @@ resource "kubernetes_secret" "opensearch_admin_auth" {
     namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
   data = {
-    OPENSEARCH_INITIAL_ADMIN_PASSWORD = random_password.opensearch_admin_pass.result
+    OPENSEARCH_INITIAL_ADMIN_PASSWORD = base64encode(random_password.opensearch_admin_pass.result)
   }
   type = "Opaque"
 }
