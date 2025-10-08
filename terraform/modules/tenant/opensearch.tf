@@ -121,7 +121,7 @@ resource "kubernetes_stateful_set" "opensearch" {
 
           env {
             name  = "plugins.security.disabled"
-            value = "false"
+            value = "true"
           }
 
           env {

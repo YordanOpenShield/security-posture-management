@@ -127,10 +127,33 @@ resource "kubernetes_job" "initdb" {
       spec {
         restart_policy = "OnFailure"
 
-        container {
-          name  = "initdb"
-          image = var.faraday_image
-          command = ["faraday-manage", "initdb"]
+            container {
+              name  = "initdb"
+              image = var.faraday_image
+              # Run as root so package installation (apk/apt-get) can succeed when
+              # we attempt to install sudo at runtime. This wrapper tries apk then
+              # apt-get and falls back if neither is present.
+              security_context {
+                run_as_user = 0
+              }
+              command = [
+                "sh",
+                "-c",
+                <<-EOF
+                if command -v sudo >/dev/null 2>&1; then
+                  echo 'sudo present'
+                else
+                  if command -v apk >/dev/null 2>&1; then
+                    echo 'Installing sudo via apk'; apk add --no-cache sudo
+                  elif command -v apt-get >/dev/null 2>&1; then
+                    echo 'Installing sudo via apt-get'; apt-get update && apt-get install -y sudo
+                  else
+                    echo 'No known package manager found, cannot install sudo'
+                  fi
+                fi
+                exec faraday-manage initdb
+                EOF
+              ]
 
           env {
             name  = "PGSQL_HOST"
