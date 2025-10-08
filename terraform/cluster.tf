@@ -1,7 +1,7 @@
 data "digitalocean_kubernetes_versions" "available" {}
 
 resource "digitalocean_kubernetes_cluster" "spm_cluster" {
-  name   = local.cluster_name
+  name   = var.cluster_name
   region = var.region
 
   version = var.k8s_version != "" ? var.k8s_version : data.digitalocean_kubernetes_versions.available.latest_version

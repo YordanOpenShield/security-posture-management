@@ -2,22 +2,10 @@ output "namespace" {
   value = kubernetes_namespace.tenant_ns.metadata[0].name
 }
 
-output "opensearch_service" {
-  value = kubernetes_service.opensearch_svc.metadata[0].name
+output "faraday_host" {
+  value = local.faraday_host
 }
 
-output "opa_service" {
-  value = kubernetes_service.opa_svc.metadata[0].name
-}
-
-output "faraday_service" {
-  value = kubernetes_service.faraday_svc.metadata[0].name
-}
-
-output "ingress_hostname" {
-  value = "${var.tenant}.${var.cluster_domain}"
-}
-
-output "ingress_tls_secret" {
-  value = var.ingress_tls_secret
+output "opensearch_host" {
+  value = local.opensearch_host
 }

@@ -1,0 +1,144 @@
+resource "kubernetes_service" "faraday" {
+  metadata {
+    name      = "faraday"
+    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+  }
+  spec {
+    selector = { app = "faraday" }
+    port {
+      port        = 5985
+      target_port = 5985
+    }
+  }
+}
+
+resource "kubernetes_persistent_volume_claim" "faraday_storage" {
+  metadata {
+    name      = "faraday-storage"
+    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+  }
+  spec {
+    access_modes = ["ReadWriteOnce"]
+    resources {
+      requests = { storage = "10Gi" }
+    }
+  }
+}
+
+resource "kubernetes_deployment" "faraday" {
+  metadata {
+    name      = "faraday"
+    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+  }
+
+  spec {
+    replicas = 1
+    selector {
+      match_labels = { app = "faraday" }
+    }
+
+    template {
+      metadata {
+        labels = { app = "faraday" }
+      }
+
+      spec {
+        container {
+          name  = "faraday"
+          image = "faradaysec/faraday:latest"
+
+          port {
+            container_port = 5985
+          }
+
+          env {
+            name  = "PGSQL_HOST"
+            value = "postgres.faraday.svc.cluster.local"
+          }
+          env {
+            name  = "PGSQL_USER"
+            value = "faraday"
+          }
+          env {
+            name  = "PGSQL_PASSWD"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.faraday_db.metadata[0].name
+                key  = "POSTGRES_PASSWORD"
+              }
+            }
+          }
+          env {
+            name  = "PGSQL_DBNAME"
+            value = "faraday"
+          }
+          env {
+            name  = "CELERY_BROKER_URL"
+            value = "amqp://faraday:${random_password.rabbitmq_password.result}@rabbitmq.faraday.svc.cluster.local:5672/"
+          }
+
+          volume_mount {
+            name       = "faraday-storage"
+            mount_path = "/faraday-storage"
+          }
+        }
+
+        volume {
+          name = "faraday-storage"
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim.faraday_storage.metadata[0].name
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_job" "initdb" {
+  metadata {
+    name      = "faraday-initdb"
+    namespace = kubernetes_namespace.tenant_nss.metadata[0].name
+  }
+
+  spec {
+    backoff_limit = 3
+
+    template {
+      metadata {
+        labels = { job = "faraday-initdb" }
+      }
+
+      spec {
+        restart_policy = "OnFailure"
+
+        container {
+          name  = "initdb"
+          image = "faradaysec/faraday:latest"
+          command = ["faraday-manage", "initdb"]
+
+          env {
+            name  = "PGSQL_HOST"
+            value = "postgres.faraday.svc.cluster.local"
+          }
+          env {
+            name  = "PGSQL_USER"
+            value = "faraday"
+          }
+          env {
+            name  = "PGSQL_PASSWD"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.faraday_db.metadata[0].name
+                key  = "POSTGRES_PASSWORD"
+              }
+            }
+          }
+          env {
+            name  = "PGSQL_DBNAME"
+            value = "faraday"
+          }
+        }
+      }
+    }
+  }
+}

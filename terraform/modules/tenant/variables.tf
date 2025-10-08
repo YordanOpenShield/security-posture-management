@@ -1,11 +1,10 @@
+# Tenant-specific
+
 variable "tenant" {
   type = string
 }
 
-variable "cluster_domain" {
-  type    = string
-  default = "spm.openshield.io"
-}
+# Images (can be overridden via root variables)
 
 variable "opensearch_image" {
   type    = string
@@ -21,6 +20,8 @@ variable "faraday_image" {
   type    = string
   default = "faradaysec/faraday:latest"
 }
+
+# Resource allocations and storage
 
 variable "opensearch_storage" {
   type    = string
@@ -124,7 +125,17 @@ variable "faraday_requests" {
   }
 }
 
-variable "ingress_tls_secret" {
-  type    = string
-  default = "verystrongsecret"
+# Cluster-specific
+
+variable "cluster_domain" {
+  type        = string
+  description = "The domain name of the cluster"
+}
+
+# Locals
+
+locals {
+    tenant_domain   = "${var.tenant}.${var.cluster_domain}"
+    faraday_host    = "faraday.${local.tenant_domain}"
+    opensearch_host = "opensearch.${local.tenant_domain}"
 }

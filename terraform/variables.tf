@@ -31,31 +31,37 @@ variable "max_nodes" {
   default     = 5
 }
 
-variable "opensearch_image" {
-  description = "OpenSearch image"
+variable "cluster_name" {
   type        = string
-  default     = "opensearchproject/opensearch:2.9.0"
+  description = "Kubernetes cluster name"
+  default     = "spm-cluster"
+}
+
+variable "cluster_domain" {
+  type    = string
+  default = "spm.openshield.io"
 }
 
 variable "k8s_version" {
-  description = "Optional Kubernetes version slug for DigitalOcean DOKS (leave empty to auto-select)"
+  description = "Kubernetes version (leave empty for latest)"
   type        = string
   default     = ""
 }
 
-variable "opa_image" {
-  description = "OPA image"
+variable "cloudflare_token" {
   type        = string
-  default     = "openpolicyagent/opa:0.54.0"
+  description = "Cloudflare API token with DNS edit permissions"
+  default     = ""
 }
 
-variable "faraday_image" {
-  description = "Faraday image"
+variable "cloudflare_zone" {
   type        = string
-  default     = "faradaysec/faraday:latest"
+  description = "Cloudflare zone (root domain) where records will be created, e.g. example.com"
+  default     = "openshield.io"
 }
 
-locals {
-  cluster_name = "spm-cluster"
-  cluster_domain = "spm.openshield.io"
+variable "cloudflare_proxied" {
+  type        = bool
+  description = "Whether the Cloudflare record should be proxied (orange cloud). Default false for now."
+  default     = false
 }
