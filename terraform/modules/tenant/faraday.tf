@@ -117,6 +117,26 @@ resource "kubernetes_job" "initdb" {
       spec {
         restart_policy = "OnFailure"
 
+        # Init container that waits for Postgres to be reachable on port 5432.
+        # This prevents the initdb container from failing immediately when the DB is still
+        # initializing or the Postgres pod is restarting.
+        init_container {
+          name  = "wait-for-postgres"
+          image = "busybox:1.36"
+          command = ["sh", "-c", "until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done"]
+          # small resource request so it doesn't contribute to quota pressure
+          resources {
+            requests = {
+              cpu    = "50m"
+              memory = "32Mi"
+            }
+            limits = {
+              cpu    = "100m"
+              memory = "64Mi"
+            }
+          }
+        }
+
         container {
           name  = "initdb"
           image = "faradaysec/faraday:latest"

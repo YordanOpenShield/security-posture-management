@@ -17,7 +17,7 @@ variable "region" {
 variable "droplet_size" {
   description = "DigitalOcean droplet size slug"
   type        = string
-  default     = "s-2vcpu-4gb"
+  default     = "s-4vcpu-8gb"
 }
 variable "min_nodes" {
   description = "Minimum nodes in the DO Kubernetes node pool"

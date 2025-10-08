@@ -25,16 +25,16 @@ variable "faraday_image" {
 
 variable "opensearch_storage" {
   type    = string
-  default = "10Gi"
+  default = "20Gi"
 }
 
 variable "quota_hard" {
   type = map(string)
   default = {
-    "requests.cpu"    = "2"
-    "requests.memory" = "4Gi"
-    "limits.cpu"      = "4"
-    "limits.memory"   = "8Gi"
+    "requests.cpu"    = "4"
+    "requests.memory" = "8Gi"
+    "limits.cpu"      = "8"
+    "limits.memory"   = "16Gi"
     "pods"            = "10"
     "persistentvolumeclaims" = "5"
   }
@@ -74,7 +74,7 @@ variable "limit_min" {
 
 variable "opensearch_java_opts" {
   type    = string
-  default = "-Xms1g -Xmx1g"
+  default = "-Xms2g -Xmx2g"
 }
 
 variable "opensearch_limits" {
@@ -120,8 +120,8 @@ variable "faraday_limits" {
 variable "faraday_requests" {
   type = map(string)
   default = {
-    cpu = "100m"
-    memory = "128Mi"
+    cpu = "500m"
+    memory = "512Mi"
   }
 }
 
