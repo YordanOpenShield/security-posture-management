@@ -75,11 +75,11 @@ jobs:
             echo
             echo "===== POD: $ns/$name ====="
             echo "--- describe ---"
-            kubectl describe pod -n "$ns" "$name" || true
-            echo "--- containers and logs (tail 200) ---"
-            containers=$(kubectl get pod -n "$ns" "$name" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true)
+            kubectl describe pod -n "$ns" "$name"
+            echo "--- containers and logs (tail 500) ---"
+            containers=$(kubectl get pod -n "$ns" "$name" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null)
             for c in $containers; do
               echo "--- logs for container: $c ---"
-              kubectl logs -n "$ns" "$name" -c "$c" --tail=200 || true
+              kubectl logs -n "$ns" "$name" -c "$c" --tail=500
             done
           done
