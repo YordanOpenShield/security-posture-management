@@ -42,6 +42,7 @@ jobs:
         if: github.event.inputs.tenant != 'skip'
         env:
           TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
         run: |
           set -e
           # Build terraform -var arguments conditionally from workflow inputs
