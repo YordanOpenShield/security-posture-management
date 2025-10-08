@@ -73,13 +73,13 @@ variable "limit_min" {
   type = map(string)
   default = {
     cpu    = "50m"
-    memory = "64Mi"
+    memory = "32Mi"
   }
 }
 
 variable "opensearch_java_opts" {
   type    = string
-  default = "-Xms2g -Xmx2g"
+  default = "-Xms1g -Xmx1g"
 }
 
 variable "opensearch_limits" {
