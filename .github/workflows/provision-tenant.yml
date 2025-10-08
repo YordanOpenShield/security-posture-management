@@ -10,6 +10,7 @@ on:
         required: true
         default: 'demo'
       destroy:
+        type: boolean
         description: 'Set to true to destroy the tenant instead of creating/updating it'
         required: false
         default: 'false'
