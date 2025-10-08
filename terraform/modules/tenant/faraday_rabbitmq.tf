@@ -45,7 +45,7 @@ resource "kubernetes_deployment" "rabbitmq" {
       spec {
         container {
           name  = "rabbitmq"
-          image = "rabbitmq:3-management-alpine"
+          image = var.rabbitmq_image
 
           port {
             container_port = 5672

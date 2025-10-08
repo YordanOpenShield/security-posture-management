@@ -71,7 +71,7 @@ resource "kubernetes_stateful_set" "postgres" {
 
         container {
           name  = "postgres"
-          image = "postgres:16-alpine"
+          image = var.postgres_image
 
           port {
             container_port = 5432

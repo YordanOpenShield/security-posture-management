@@ -8,17 +8,22 @@ variable "tenant" {
 
 variable "opensearch_image" {
   type    = string
-  default = "opensearchproject/opensearch:2.9.0"
-}
-
-variable "opa_image" {
-  type    = string
-  default = "openpolicyagent/opa:0.54.0"
+  default = "opensearchproject/opensearch:latest"
 }
 
 variable "faraday_image" {
   type    = string
   default = "faradaysec/faraday:latest"
+}
+
+variable "postgres_image" {
+  type    = string
+  default = "postgres:16-alpine"
+}
+
+variable "rabbitmq_image" {
+  type    = string
+  default = "rabbitmq:3-management"
 }
 
 # Resource allocations and storage
@@ -90,22 +95,6 @@ variable "opensearch_requests" {
   default = {
     cpu = "500m"
     memory = "1Gi"
-  }
-}
-
-variable "opa_limits" {
-  type = map(string)
-  default = {
-    cpu = "250m"
-    memory = "256Mi"
-  }
-}
-
-variable "opa_requests" {
-  type = map(string)
-  default = {
-    cpu = "50m"
-    memory = "64Mi"
   }
 }
 

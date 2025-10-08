@@ -45,7 +45,7 @@ resource "kubernetes_deployment" "faraday" {
       spec {
         container {
           name  = "faraday"
-          image = "faradaysec/faraday:latest"
+          image = var.faraday_image
 
           port {
             container_port = 5985
@@ -53,11 +53,16 @@ resource "kubernetes_deployment" "faraday" {
 
           env {
             name  = "PGSQL_HOST"
-            value = "postgres.faraday.svc.cluster.local"
+            value = kubernetes_service.postgres.metadata[0].name + "." + kubernetes_namespace.tenant_ns.metadata[0].name + ".svc.cluster.local"
           }
           env {
             name  = "PGSQL_USER"
-            value = "faraday"
+            value_from {
+                secret_key_ref {
+                    name = kubernetes_secret.faraday_db_auth.metadata[0].name
+                    key  = "POSTGRES_USER"
+                }
+            }
           }
           env {
             name  = "PGSQL_PASSWD"
@@ -70,11 +75,16 @@ resource "kubernetes_deployment" "faraday" {
           }
           env {
             name  = "PGSQL_DBNAME"
-            value = "faraday"
+            value_from {
+                secret_key_ref {
+                    name = kubernetes_secret.faraday_db_auth.metadata[0].name
+                    key  = "POSTGRES_DB"
+                }
+            }
           }
           env {
             name  = "CELERY_BROKER_URL"
-            value = "amqp://faraday:${random_password.rabbitmq_password.result}@rabbitmq.faraday.svc.cluster.local:5672/"
+            value = "amqp://faraday:${random_password.rabbitmq_password.result}@${kubernetes_service.rabbitmq.metadata[0].name}.${kubernetes_namespace.tenant_ns.metadata[0].name}.svc.cluster.local:5672/"
           }
 
           volume_mount {
@@ -117,26 +127,6 @@ resource "kubernetes_job" "initdb" {
       spec {
         restart_policy = "OnFailure"
 
-        # Init container that waits for Postgres to be reachable on port 5432.
-        # This prevents the initdb container from failing immediately when the DB is still
-        # initializing or the Postgres pod is restarting.
-        init_container {
-          name  = "wait-for-postgres"
-          image = "busybox:1.36"
-          command = ["sh", "-c", "until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done"]
-          # small resource request so it doesn't contribute to quota pressure
-          resources {
-            requests = {
-              cpu    = "50m"
-              memory = "32Mi"
-            }
-            limits = {
-              cpu    = "100m"
-              memory = "64Mi"
-            }
-          }
-        }
-
         container {
           name  = "initdb"
           image = "faradaysec/faraday:latest"
@@ -144,7 +134,7 @@ resource "kubernetes_job" "initdb" {
 
           env {
             name  = "PGSQL_HOST"
-            value = "postgres.faraday.svc.cluster.local"
+            value = "${kubernetes_service.postgres.metadata[0].name}.${kubernetes_namespace.tenant_ns.metadata[0].name}.svc.cluster.local"
           }
           env {
             name  = "PGSQL_USER"
@@ -161,7 +151,12 @@ resource "kubernetes_job" "initdb" {
           }
           env {
             name  = "PGSQL_DBNAME"
-            value = "faraday"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.faraday_db_auth.metadata[0].name
+                key  = "POSTGRES_DB"
+              }
+            }
           }
         }
       }
