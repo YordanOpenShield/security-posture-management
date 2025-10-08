@@ -53,7 +53,7 @@ resource "kubernetes_deployment" "faraday" {
 
           env {
             name  = "PGSQL_HOST"
-            value = kubernetes_service.postgres.metadata[0].name + "." + kubernetes_namespace.tenant_ns.metadata[0].name + ".svc.cluster.local"
+            value = "${kubernetes_service.postgres.metadata[0].name}.${kubernetes_namespace.tenant_ns.metadata[0].name}.svc.cluster.local"
           }
           env {
             name  = "PGSQL_USER"
