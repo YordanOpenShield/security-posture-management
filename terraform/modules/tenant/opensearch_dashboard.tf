@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "opensearch_dashboards" {
           }
 
           env {
-            name = "OPENSEARCH_PASSWORD"
+            name = "OPENSEARCH_INITIAL_ADMIN_PASSWORD"
             value_from {
               secret_key_ref {
                 name = kubernetes_secret.opensearch_admin_auth.metadata[0].name

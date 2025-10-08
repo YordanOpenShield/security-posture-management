@@ -33,11 +33,6 @@ variable "rabbitmq_image" {
 
 # Resource allocations and storage
 
-variable "opensearch_storage" {
-  type    = string
-  default = "20Gi"
-}
-
 variable "quota_hard" {
   type = map(string)
   default = {
@@ -45,8 +40,8 @@ variable "quota_hard" {
     "requests.memory" = "8Gi"
     "limits.cpu"      = "8"
     "limits.memory"   = "16Gi"
-    "pods"            = "10"
-    "persistentvolumeclaims" = "5"
+    "pods"            = "20"
+    "persistentvolumeclaims" = "10"
   }
 }
 
@@ -101,6 +96,11 @@ variable "opensearch_requests" {
     cpu = "500m"
     memory = "1Gi"
   }
+}
+
+variable "opensearch_storage" {
+  type    = string
+  default = "20Gi"
 }
 
 variable "opensearch_dashboards_limits" {

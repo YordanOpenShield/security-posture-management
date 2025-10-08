@@ -129,7 +129,7 @@ resource "kubernetes_job" "initdb" {
 
         container {
           name  = "initdb"
-          image = "faradaysec/faraday:latest"
+          image = var.faraday_image
           command = ["faraday-manage", "initdb"]
 
           env {
@@ -138,7 +138,12 @@ resource "kubernetes_job" "initdb" {
           }
           env {
             name  = "PGSQL_USER"
-            value = "faraday"
+            value_from {
+                secret_key_ref {
+                    name = kubernetes_secret.faraday_db_auth.metadata[0].name
+                    key  = "POSTGRES_USER"
+                }
+            }
           }
           env {
             name  = "PGSQL_PASSWD"
