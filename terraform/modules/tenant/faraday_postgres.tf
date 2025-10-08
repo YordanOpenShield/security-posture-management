@@ -57,7 +57,12 @@ resource "kubernetes_stateful_set" "postgres" {
         init_container {
           name  = "init-pgdata"
           image = "busybox:1.36"
+          # Run as root so the container can create directories and chown them even
+          # if the underlying volume has root-owned entries like lost+found.
           command = ["sh", "-c", "mkdir -p /var/lib/postgresql/data/pgdata && chown -R 70:70 /var/lib/postgresql/data || true"]
+          security_context {
+            run_as_user = 0
+          }
           volume_mount {
             name       = "postgres-data"
             mount_path = "/var/lib/postgresql/data"

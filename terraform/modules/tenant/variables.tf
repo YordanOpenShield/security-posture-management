@@ -74,7 +74,7 @@ variable "limit_min" {
 
 variable "opensearch_java_opts" {
   type    = string
-  default = "-Xms512m -Xmx512m"
+  default = "-Xms1g -Xmx1g"
 }
 
 variable "opensearch_limits" {

@@ -74,7 +74,10 @@ resource "kubernetes_stateful_set" "opensearch" {
         init_container {
           name  = "init-sysctl"
           image = "busybox:1.36"
-          command = ["sh", "-c", "sysctl -w vm.max_map_count=262144"]
+          # Make sysctl tolerant: some managed clusters do not allow sysctl
+          # changes from containers. Append || true so the init step succeeds
+          # even if the sysctl command fails.
+          command = ["sh", "-c", "sysctl -w vm.max_map_count=262144 || true"]
           security_context {
             privileged = true
           }
@@ -87,7 +90,11 @@ resource "kubernetes_stateful_set" "opensearch" {
         init_container {
           name  = "chown-data"
           image = "busybox:1.36"
+          # Run this init container as root so it can chown the mounted volume.
           command = ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data || true"]
+          security_context {
+            run_as_user = 0
+          }
           volume_mount {
             name       = "opensearch-data"
             mount_path = "/usr/share/opensearch/data"
