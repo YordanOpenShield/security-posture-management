@@ -71,3 +71,20 @@ jobs:
           kubectl get resourcequota --all-namespaces
           echo "Kubernetes limit ranges (all namespaces):"
           kubectl get limitrange --all-namespaces
+
+          echo
+          echo "== Per-pod describe and recent logs (capped) =="
+          echo "Collecting describe + logs for up to 50 pods; logs tail=200 lines per container"
+
+          kubectl get pods --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name | head -n 50 | while read -r ns name; do
+            echo
+            echo "===== POD: $ns/$name ====="
+            echo "--- describe ---"
+            kubectl describe pod -n "$ns" "$name" || true
+            echo "--- containers and logs (tail 200) ---"
+            containers=$(kubectl get pod -n "$ns" "$name" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true)
+            for c in $containers; do
+              echo "--- logs for container: $c ---"
+              kubectl logs -n "$ns" "$name" -c "$c" --tail=200 || true
+            done
+          done
