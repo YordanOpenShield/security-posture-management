@@ -106,13 +106,13 @@ resource "kubernetes_deployment" "faraday" {
   depends_on = [
     kubernetes_stateful_set.opensearch,
     kubernetes_stateful_set.postgres,
-    kubernetes_job.create_tables
+    kubernetes_job.initdb
   ]
 }
 
-resource "kubernetes_job" "create_tables" {
+resource "kubernetes_job" "initdb" {
   metadata {
-    name      = "faraday-create-tables"
+    name      = "faraday-initdb"
     namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
 
@@ -121,19 +121,39 @@ resource "kubernetes_job" "create_tables" {
 
     template {
       metadata {
-        labels = { job = "faraday-create-tables" }
+        labels = { job = "faraday-initdb" }
       }
 
       spec {
         restart_policy = "OnFailure"
 
             container {
-              name  = "create-tables"
+              name  = "initdb"
               image = var.faraday_image
+              # Run as root so package installation (apk/apt-get) can succeed when
+              # we attempt to install sudo at runtime. This wrapper tries apk then
+              # apt-get and falls back if neither is present.
               security_context {
                 run_as_user = 0
               }
-              command = ["faraday-manage", "create-tables"]
+              command = [
+                "sh",
+                "-c",
+                <<-EOF
+                if command -v sudo >/dev/null 2>&1; then
+                  echo 'sudo present'
+                else
+                  if command -v apk >/dev/null 2>&1; then
+                    echo 'Installing sudo via apk'; apk add --no-cache sudo
+                  elif command -v apt-get >/dev/null 2>&1; then
+                    echo 'Installing sudo via apt-get'; apt-get update && apt-get install -y sudo
+                  else
+                    echo 'No known package manager found, cannot install sudo'
+                  fi
+                fi
+                exec faraday-manage initdb
+                EOF
+              ]
 
           env {
             name  = "PGSQL_HOST"
