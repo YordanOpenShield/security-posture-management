@@ -46,14 +46,14 @@ resource "kubernetes_stateful_set" "postgres" {
       }
       spec {
         # Run Postgres as the standard postgres UID and ensure group ownership of the
-        # data directory so initdb can run even if the PV contains root-owned folders.
+        # data directory so create-tables can run even if the PV contains root-owned folders.
         security_context {
           run_as_user = 70
           fs_group     = 70
         }
 
         # Init container: create PGDATA subdirectory and chown it. This avoids
-        # initdb failing when the volume root contains items like lost+found.
+        # create-tables failing when the volume root contains items like lost+found.
         init_container {
           name  = "init-pgdata"
           image = "busybox:1.36"

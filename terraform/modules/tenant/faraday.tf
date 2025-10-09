@@ -106,7 +106,7 @@ resource "kubernetes_deployment" "faraday" {
   depends_on = [
     kubernetes_stateful_set.opensearch,
     kubernetes_stateful_set.postgres,
-    kubernetes_job.initdb
+    kubernetes_job.create_tables
   ]
 }
 
@@ -128,7 +128,7 @@ resource "kubernetes_job" "create_tables" {
         restart_policy = "OnFailure"
 
             container {
-              name  = "initdb"
+              name  = "create-tables"
               image = var.faraday_image
               security_context {
                 run_as_user = 0
