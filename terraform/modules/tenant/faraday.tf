@@ -136,24 +136,7 @@ resource "kubernetes_job" "initdb" {
               security_context {
                 run_as_user = 0
               }
-              command = [
-                "sh",
-                "-c",
-                <<-EOF
-                if command -v sudo >/dev/null 2>&1; then
-                  echo 'sudo present'
-                else
-                  if command -v apk >/dev/null 2>&1; then
-                    echo 'Installing sudo via apk'; apk add --no-cache sudo
-                  elif command -v apt-get >/dev/null 2>&1; then
-                    echo 'Installing sudo via apt-get'; apt-get update && apt-get install -y sudo
-                  else
-                    echo 'No known package manager found, cannot install sudo'
-                  fi
-                fi
-                exec faraday-manage initdb
-                EOF
-              ]
+              command = ["faraday-manage", "create-tables"]
 
           env {
             name  = "PGSQL_HOST"
