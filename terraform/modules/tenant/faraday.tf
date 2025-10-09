@@ -110,9 +110,9 @@ resource "kubernetes_deployment" "faraday" {
   ]
 }
 
-resource "kubernetes_job" "initdb" {
+resource "kubernetes_job" "create_tables" {
   metadata {
-    name      = "faraday-initdb"
+    name      = "faraday-create-tables"
     namespace = kubernetes_namespace.tenant_ns.metadata[0].name
   }
 
@@ -121,7 +121,7 @@ resource "kubernetes_job" "initdb" {
 
     template {
       metadata {
-        labels = { job = "faraday-initdb" }
+        labels = { job = "faraday-create-tables" }
       }
 
       spec {
@@ -130,9 +130,6 @@ resource "kubernetes_job" "initdb" {
             container {
               name  = "initdb"
               image = var.faraday_image
-              # Run as root so package installation (apk/apt-get) can succeed when
-              # we attempt to install sudo at runtime. This wrapper tries apk then
-              # apt-get and falls back if neither is present.
               security_context {
                 run_as_user = 0
               }
