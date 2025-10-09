@@ -71,16 +71,16 @@ jobs:
           kubectl get jobs --all-namespaces -o wide || true
 
           # If the faraday init job exists, describe it and fetch logs for its pods.
-          echo "\nChecking faraday init job (demo/faraday-initdb)"
-          kubectl -n demo get job faraday-initdb -o yaml || echo "job faraday-initdb not found"
-          echo "\nDescribe faraday-initdb job (if present):"
-          kubectl -n demo describe job faraday-initdb || true
+          echo "\nChecking faraday init job (demo/faraday-create-tables)"
+          kubectl -n demo get job faraday-create-tables -o yaml || echo "job faraday-create-tables not found"
+          echo "\nDescribe faraday-create-tables job (if present):"
+          kubectl -n demo describe job faraday-create-tables || true
 
           echo "\nEvents in the demo namespace (last 100):"
           kubectl -n demo get events --sort-by=.metadata.creationTimestamp || true
 
-          echo "\nJob pods and logs for faraday-initdb (if any):"
-          job_pods=$(kubectl -n demo get pods --selector=job-name=faraday-initdb -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)
+          echo "\nJob pods and logs for faraday-create-tables (if any):"
+          job_pods=$(kubectl -n demo get pods --selector=job-name=faraday-create-tables -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)
           if [ -n "$job_pods" ]; then
             for p in $job_pods; do
               echo "--- Pod: $p ---"
@@ -92,7 +92,7 @@ jobs:
               done
             done
           else
-            echo "No pods found for job faraday-initdb"
+            echo "No pods found for job faraday-create-tables"
           fi
 
           echo
