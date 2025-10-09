@@ -20,7 +20,7 @@ resource "kubernetes_persistent_volume_claim" "faraday_storage" {
   spec {
     access_modes = ["ReadWriteOnce"]
     resources {
-      requests = { storage = "10Gi" }
+      requests = var.postgres_storage
     }
   }
 }

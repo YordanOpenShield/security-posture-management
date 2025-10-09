@@ -135,6 +135,11 @@ variable "faraday_requests" {
   }
 }
 
+variable "postgres_storage" {
+  type    = string
+  default = "20Gi"
+}
+
 # Cluster-specific
 
 variable "cluster_domain" {
