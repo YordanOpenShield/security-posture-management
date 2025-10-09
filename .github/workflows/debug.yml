@@ -70,23 +70,8 @@ jobs:
           echo "\nKubernetes jobs (all namespaces):"
           kubectl get jobs --all-namespaces -o wide || true
 
-          echo "\nEvents in the demo namespace (last 100):"
-          kubectl -n demo get events --sort-by=.metadata.creationTimestamp || true
-
-          echo "\nJob-pods in the demo namespace:"
-          kubectl -n demo get pods --all-namespaces --no-headers -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name | head -n 10 | while read -r ns name; do
-            echo
-            echo "===== POD: $ns/$name ====="
-            echo "--- describe ---"
-            kubectl describe pod -n "$ns" "$name"
-            echo "--- containers and logs (tail 500) ---"
-            containers=$(kubectl get pod -n "$ns" "$name" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null)
-            for c in $containers; do
-              echo "--- logs for container: $c ---"
-              kubectl logs -n "$ns" "$name" -c "$c" --tail=500
-            done
-          done || echo "No pods found for job faraday-initdb"
-
+          echo "\nEvents in all namespaces (last 100):"
+          kubectl --all-namespaces get events --sort-by=.metadata.creationTimestamp || true
 
           echo
           echo "== Per-pod describe and recent logs (capped) =="
