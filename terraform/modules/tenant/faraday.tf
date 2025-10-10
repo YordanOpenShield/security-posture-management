@@ -109,7 +109,6 @@ resource "kubernetes_deployment" "faraday" {
     kubernetes_stateful_set.opensearch,
     kubernetes_stateful_set.postgres,
     kubernetes_job.create_tables,
-    kubernetes_job.initdb
   ]
 }
 
@@ -206,6 +205,8 @@ resource "kubernetes_job" "initdb" {
       }
     }
   }
+
+  depends_on = [ kubernetes_stateful_set.postgres ]
 }
 
 resource "kubernetes_job" "create_tables" {
@@ -266,6 +267,5 @@ resource "kubernetes_job" "create_tables" {
     }
   }
 
-  # Ensure create-tables runs after SQL provisioning
   depends_on = [kubernetes_job.initdb]
 }
