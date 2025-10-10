@@ -1,36 +1,33 @@
-resource "kubernetes_namespace" "tenant_ns" {
-  metadata {
-    name = var.tenant
-    labels = {
-      tenant = var.tenant
-    }
+resource "hcloud_server" "tenant_server" {
+  name       = "spm-tenant-${var.name}"
+  image      = var.server_image
+  server_type = var.server_type
+  location   = var.server_location
+  ssh_keys   = [hcloud_ssh_key.ssh_key.id]
+
+  labels = {
+    tenant = var.name
+    solution = "spm"
   }
+
+  depends_on = [
+    hcloud_ssh_key.ssh_key
+  ]
 }
 
-# ResourceQuota
-resource "kubernetes_resource_quota" "tenant_quota" {
-  metadata {
-    name      = "${var.tenant}-quota"
-    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
-  }
-  spec {
-    hard = var.quota_hard
-  }
-}
+resource "hcloud_volume" "tenant_volume" {
+  name        = "spm-tenant-${var.name}-volume"
+  size        = var.volume_size
+  format      = "ext4"
+  server_id   = hcloud_server.tenant_server.id
+  automount   = true
 
-# LimitRange
-resource "kubernetes_limit_range" "tenant_limits" {
-  metadata {
-    name      = "${var.tenant}-limits"
-    namespace = kubernetes_namespace.tenant_ns.metadata[0].name
+  labels = {
+    tenant = var.name
+    solution = "spm"
   }
-  spec {
-    limit {
-      type = "Container"
-      default = var.limit_default
-      default_request = var.limit_default_request
-      max = var.limit_max
-      min = var.limit_min
-    }
-  }
+
+  depends_on = [
+    hcloud_server.tenant_server
+  ]
 }

@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tenant:
-        description: 'Tenant id to provision'
+        description: 'Tenant ID'
         required: true
         default: 'demo'
       destroy:
@@ -14,14 +14,6 @@ on:
         description: 'Destroy tenant'
         required: false
         default: 'false'
-      quota_hard:
-        description: 'Optional ResourceQuota map (HCL map syntax) e.g. {"pods"="20","requests.cpu"="4"}'
-        required: false
-        default: ''
-      limit_default:
-        description: 'Optional LimitRange default map (HCL map syntax) e.g. {"cpu"="250m","memory"="512Mi"}'
-        required: false
-        default: ''
 
 jobs:
   provision:
@@ -29,9 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
-          fetch-depth: 0
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -46,20 +35,12 @@ jobs:
         working-directory: ./terraform
         if: ${{ github.event.inputs.destroy != 'true' }}
         env:
-          TF_VAR_digitalocean_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          TF_VAR_hetzner_token: ${{ secrets.HETZNER_TOKEN }}
           TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
         run: |
           set -e
           # Build terraform -var arguments conditionally from workflow inputs
           ARGS=("-var" "tenant=${{ github.event.inputs.tenant }}")
-
-          if [ -n "${{ github.event.inputs.quota_hard }}" ]; then
-            ARGS+=("-var" "quota_hard=${{ github.event.inputs.quota_hard }}")
-          fi
-
-          if [ -n "${{ github.event.inputs.limit_default }}" ]; then
-            ARGS+=("-var" "limit_default=${{ github.event.inputs.limit_default }}")
-          fi
 
           terraform apply "${ARGS[@]}" -auto-approve
 
