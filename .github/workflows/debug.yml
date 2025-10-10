@@ -67,6 +67,10 @@ jobs:
           echo "Kubernetes limit ranges (all namespaces):"
           kubectl get limitrange --all-namespaces
 
+          echo
+          echo "== All Events =="
+          kubectl get events --all-namespaces -o wide || true
+
           echo "\nKubernetes jobs (all namespaces):"
           kubectl get jobs --all-namespaces -o wide || true
 
