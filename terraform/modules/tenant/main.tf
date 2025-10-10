@@ -1,12 +1,12 @@
 resource "hcloud_server" "tenant_server" {
-  name       = "spm-tenant-${var.name}"
-  image      = var.server_image
+  name        = "spm-tenant-${var.name}"
+  image       = var.server_image
   server_type = var.server_type
-  location   = var.server_location
-  ssh_keys   = [hcloud_ssh_key.ssh_key.id]
+  # location    = var.server_location
+  ssh_keys    = [hcloud_ssh_key.ssh_key.id]
 
   labels = {
-    tenant = var.name
+    tenant   = var.name
     solution = "spm"
   }
 
@@ -19,6 +19,7 @@ resource "hcloud_volume" "tenant_volume" {
   name        = "spm-tenant-${var.name}-volume"
   size        = var.volume_size
   format      = "ext4"
+  # location    = var.server_location
   server_id   = hcloud_server.tenant_server.id
   automount   = true
 
