@@ -68,14 +68,12 @@ jobs:
           kubectl get limitrange --all-namespaces
 
           echo
-          echo "== All Events =="
-          kubectl get events --all-namespaces -o wide || true
-
-          echo "\nKubernetes jobs (all namespaces):"
+          echo "Kubernetes jobs (all namespaces):"
           kubectl get jobs --all-namespaces -o wide || true
 
-          echo "\nEvents in all namespaces (last 100):"
-          kubectl --all-namespaces get events --sort-by=.metadata.creationTimestamp || true
+          echo
+          echo "Events in all namespaces (last 100):"
+          kubectl get events --all-namespaces --sort-by=.metadata.creationTimestamp || true
 
           echo
           echo "== Per-pod describe and recent logs (capped) =="
