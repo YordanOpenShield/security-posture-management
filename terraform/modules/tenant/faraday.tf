@@ -91,7 +91,7 @@ resource "kubernetes_deployment" "faraday" {
 
           volume_mount {
             name       = "faraday-storage"
-            mount_path = "/faraday-storage"
+            mount_path = "/home/faraday/.faraday"
           }
         }
 
@@ -246,6 +246,11 @@ CONF
           EOF
           ]
 
+          volume_mount {
+            name       = "faraday-storage"
+            mount_path = "/home/faraday/.faraday"
+          }
+
           env {
             name = "PGSQL_HOST"
             value = "${kubernetes_service.postgres.metadata[0].name}.${kubernetes_namespace.tenant_ns.metadata[0].name}.svc.cluster.local"
@@ -278,9 +283,18 @@ CONF
             }
           }
         }
+
+        volume {
+          name = "faraday-storage"
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim.faraday_storage.metadata[0].name
+          }
+        }
       }
     }
   }
 
   depends_on = [kubernetes_job.initdb]
 }
+
+        
