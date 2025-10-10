@@ -229,7 +229,22 @@ resource "kubernetes_job" "create_tables" {
         container {
           name  = "create-tables"
           image = var.faraday_image
-          command = ["sh", "-c", "faraday-manage create-tables"]
+          command = ["sh", "-c", <<-EOF
+            set -eux
+
+            # Ensure Faraday config dir exists and write a minimal server.ini
+            mkdir -p /home/faraday/.faraday/config
+            cat > /home/faraday/.faraday/config/server.ini <<CONF
+[database]
+connection_string = postgresql+psycopg2://$PGSQL_USER:$PGSQL_PASSWD@$PGSQL_HOST/$PGSQL_DBNAME
+CONF
+
+            echo "Wrote /home/faraday/.faraday/config/server.ini"
+
+            # Run migrations
+            faraday-manage create-tables
+          EOF
+          ]
 
           env {
             name = "PGSQL_HOST"
