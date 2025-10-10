@@ -89,6 +89,42 @@ resource "kubernetes_deployment" "faraday" {
             value = "amqp://faraday:${random_password.rabbitmq_password.result}@${kubernetes_service.rabbitmq.metadata[0].name}.${kubernetes_namespace.tenant_ns.metadata[0].name}.svc.cluster.local:5672/"
           }
 
+          env {
+            name  = "REDIS_SERVER"
+            value = "${kubernetes_service.redis.metadata[0].name}.${kubernetes_namespace.tenant_ns.metadata[0].name}.svc.cluster.local"
+          }
+
+          resources {
+            requests = {
+              cpu    = "250m"
+              memory = "512Mi"
+            }
+            limits = {
+              cpu    = "500m"
+              memory = "1Gi"
+            }
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/"
+              port = 5985
+            }
+            initial_delay_seconds = 10
+            period_seconds = 10
+            timeout_seconds = 2
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = 5985
+            }
+            initial_delay_seconds = 5
+            period_seconds = 5
+            timeout_seconds = 2
+          }
+
           volume_mount {
             name       = "faraday-storage"
             mount_path = "/home/faraday/.faraday"
@@ -106,8 +142,9 @@ resource "kubernetes_deployment" "faraday" {
   }
 
   depends_on = [
-    kubernetes_stateful_set.opensearch,
     kubernetes_stateful_set.postgres,
+    kubernetes_deployment.rabbitmq,
+    kubernetes_deployment.redis,
     kubernetes_job.create_tables,
   ]
 }

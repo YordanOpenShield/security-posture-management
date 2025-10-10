@@ -31,6 +31,11 @@ variable "rabbitmq_image" {
   default = "rabbitmq:3-management"
 }
 
+variable "redis_image" {
+  type    = string
+  default = "redis:6.2-alpine"
+}
+
 # Resource allocations and storage
 
 variable "quota_hard" {
@@ -138,6 +143,27 @@ variable "faraday_requests" {
 variable "postgres_storage" {
   type    = string
   default = "20Gi"
+}
+
+variable "redis_storage" {
+  type    = string
+  default = "10Gi"
+}
+
+variable "redis_limits" {
+  type = map(string)
+  default = {
+    cpu = "500m"
+    memory = "512Mi"
+  }
+}
+
+variable "redis_requests" {
+  type = map(string)
+  default = {
+    cpu = "200m"
+    memory = "256Mi"
+  }
 }
 
 # Cluster-specific
