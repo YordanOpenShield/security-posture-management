@@ -3,5 +3,67 @@
   become: true
   gather_facts: yes
 
-  roles:
-    - tenant_stack
+  tasks:
+    - name: create data mount and folder
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: "0755"
+      loop:
+        - "{{ data_mount }}"
+        - "{{ data_mount }}/postgres"
+        - "{{ data_mount }}/redis"
+        - "{{ data_mount }}/faraday"
+
+    - name: render docker-compose.yml
+      template:
+        src: templates/docker-compose.yml.j2
+        dest: "{{ compose_dir }}/docker-compose.yml"
+        owner: 1000
+        group: 1000
+        mode: "0644"
+      vars:
+        pg_user: "{{ pg_user }}"
+        pg_password: "{{ pg_password }}"
+        pg_db: "{{ pg_db }}"
+        rmq_user: "{{ rmq_user }}"
+        rmq_password: "{{ rmq_password }}"
+
+    - name: render nginx.conf.j2
+      template:
+        src: templates/nginx.conf.j2
+        dest: "{{ compose_dir }}/nginx.conf"
+        owner: 1000
+        group: 1000
+        mode: "0644"
+
+    - name: add Docker GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: add Docker repo
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: install docker engine
+      apt:
+        name: [docker-ce, docker-ce-cli, containerd.io]
+        state: latest
+        update_cache: yes
+
+    - name: install docker compose plugin
+      shell: |
+        mkdir -p /usr/libexec/docker/cli-plugins
+        curl -SL "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64" -o /usr/libexec/docker/cli-plugins/docker-compose
+        chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+      args:
+        creates: /usr/libexec/docker/cli-plugins/docker-compose
+
+    - name: start compose
+      shell: docker compose -f {{ compose_dir }}/docker-compose.yml up -d
+      args:
+        chdir: "{{ compose_dir }}"
