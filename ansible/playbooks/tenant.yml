@@ -3,19 +3,12 @@
   become: true
   gather_facts: yes
 
+  vars:
+    compose_dir: /opt/faraday
+    pg_user: faraday
+    pg_db: faraday
+
   tasks:
-    - name: create data mount and folder
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: 1000
-        group: 1000
-        mode: "0755"
-      loop:
-        - "{{ data_mount }}"
-        - "{{ data_mount }}/postgres"
-        - "{{ data_mount }}/redis"
-        - "{{ data_mount }}/faraday"
 
     - name: render docker-compose.yml
       template:
@@ -43,27 +36,20 @@
       ansible.builtin.apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
+        keyring: /etc/apt/keyrings/docker.asc
 
     - name: add Docker repo
       apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        repo: 'deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable'
         state: present
 
     - name: install docker engine
       apt:
-        name: [docker-ce, docker-ce-cli, containerd.io]
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]
         state: latest
         update_cache: yes
 
-    - name: install docker compose plugin
-      shell: |
-        mkdir -p /usr/libexec/docker/cli-plugins
-        curl -SL "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64" -o /usr/libexec/docker/cli-plugins/docker-compose
-        chmod +x /usr/libexec/docker/cli-plugins/docker-compose
-      args:
-        creates: /usr/libexec/docker/cli-plugins/docker-compose
-
     - name: start compose
-      shell: docker compose -f {{ compose_dir }}/docker-compose.yml up -d
+      shell: docker compose -f docker-compose.yml up -d
       args:
         chdir: "{{ compose_dir }}"

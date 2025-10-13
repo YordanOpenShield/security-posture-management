@@ -16,8 +16,6 @@ resource "ansible_playbook" "tenant_configure" {
     tenant_name = var.name
     pg_user     = local.postgres_user
     pg_password = random_password.pg_password.result
-    rmq_user    = local.rabbitmq_user
-    rmq_password = random_password.rmq_password.result
   }
 
   depends_on = [hcloud_server.tenant_server, hcloud_ssh_key.ssh_key]

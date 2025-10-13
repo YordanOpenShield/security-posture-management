@@ -7,22 +7,13 @@ services:
       POSTGRES_PASSWORD: "{{ pg_password | default('faraday') }}"
       POSTGRES_DB: "{{ pg_db | default('faraday') }}"
     volumes:
-      - /srv/faraday/data/postgres:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
   redis:
     image: redis:6.2-alpine
     volumes:
-      - /srv/faraday/data/redis:/data
-    restart: unless-stopped
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    environment:
-      RABBITMQ_DEFAULT_USER: "{{ rmq_user | default('faraday') }}"
-      RABBITMQ_DEFAULT_PASS: "{{ rmq_password | default('changeme') }}"
-    ports:
-      - "15672:15672"
+      - redisdata:/data
     restart: unless-stopped
 
   faraday:
@@ -31,10 +22,17 @@ services:
       - postgres
       - redis
       - rabbitmq
+    environment:
+      - LISTEN_ADDR=0.0.0.0
+      - PGSQL_HOST=postgres
+      - PGSQL_USER={{ pg_user | default('faraday') }}
+      - PGSQL_PASSWD={{ pg_password | default('faraday') }}
+      - PGSQL_DBNAME={{ pg_db | default('faraday') }}
+      - REDIS_SERVER=redis
     ports:
       - "5985:5985"
     volumes:
-      - /srv/faraday/data/faraday:/home/faraday/.faraday
+      - faradaydata:/home/faraday/.faraday
     restart: unless-stopped
 
   nginx:
@@ -48,3 +46,8 @@ services:
     depends_on:
       - faraday
     restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  opensearchdata:
