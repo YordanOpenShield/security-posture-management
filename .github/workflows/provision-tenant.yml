@@ -78,63 +78,63 @@ jobs:
             git push origin HEAD:$BRANCH
           fi
 
-  deploy-to-tenant:
-    needs: provision-infrastructure
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  # deploy-to-tenant:
+  #   needs: provision-infrastructure
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
 
-      - name: Download terraform state (artifact)
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-state-${{ github.event.inputs.tenant }}
+  #     - name: Download terraform state (artifact)
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: terraform-state-${{ github.event.inputs.tenant }}
 
-      - name: Read Terraform outputs into environment
-        working-directory: ./terraform
-        id: tfoutputs
-        run: |
-          # Required outputs from your terraform: tenant_ip, pg_password, rabbitmq_password, pg_user, pg_db
-          echo "TENANT_IP=$(terraform output -raw tenant_host)" >> $GITHUB_ENV
-          echo "PG_PASSWORD=$(terraform output -raw pg_password)" >> $GITHUB_ENV
-          echo "RABBITMQ_PASSWORD=$(terraform output -raw rabbitmq_password)" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY=$(terraform output -raw tenant_ssh_private_key)" >> $GITHUB_ENV
+  #     - name: Read Terraform outputs into environment
+  #       working-directory: ./terraform
+  #       id: tfoutputs
+  #       run: |
+  #         # Required outputs from your terraform: tenant_ip, pg_password, rabbitmq_password, pg_user, pg_db
+  #         echo "TENANT_IP=$(terraform output -raw tenant_host)" >> $GITHUB_ENV
+  #         echo "PG_PASSWORD=$(terraform output -raw pg_password)" >> $GITHUB_ENV
+  #         echo "RABBITMQ_PASSWORD=$(terraform output -raw rabbitmq_password)" >> $GITHUB_ENV
+  #         echo "SSH_PRIVATE_KEY=$(terraform output -raw tenant_ssh_private_key)" >> $GITHUB_ENV
 
-      - name: Create inventory file for Ansible
-        working-directory: ./ansible
-        run: |
-          mkdir -p inventories
-          cat > ./inventories/tenant.yml <<EOF
-          [tenant]
-          ${{ env.TENANT_IP }} ansible_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no'
-          EOF
+  #     - name: Create inventory file for Ansible
+  #       working-directory: ./ansible
+  #       run: |
+  #         mkdir -p inventories
+  #         cat > ./inventories/tenant.yml <<EOF
+  #         [tenant]
+  #         ${{ env.TENANT_IP }} ansible_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+  #         EOF
 
-      - name: Start ssh-agent and add 'key'
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+  #     - name: Start ssh-agent and add 'key'
+  #       uses: webfactory/ssh-agent@v0.9.0
+  #       with:
+  #         ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core==2.16.0  # or ansible if you need collections
-          pip install "ansible[azure]" --no-deps || true
-        shell: bash
+  #     - name: Install Ansible
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install ansible-core==2.16.0  # or ansible if you need collections
+  #         pip install "ansible[azure]" --no-deps || true
+  #       shell: bash
 
-      - name: Create extra-vars JSON file (temp)
-        run: |
-          cat > ansible_vars.json <<EOF
-          { "pg_password": "${{ env.PG_PASSWORD }}", "rabbitmq_pass": "${{ env.RABBITMQ_PASSWORD }}" }
-          EOF
-          chmod 600 ansible_vars.json
+  #     - name: Create extra-vars JSON file (temp)
+  #       run: |
+  #         cat > ansible_vars.json <<EOF
+  #         { "pg_password": "${{ env.PG_PASSWORD }}", "rabbitmq_pass": "${{ env.RABBITMQ_PASSWORD }}" }
+  #         EOF
+  #         chmod 600 ansible_vars.json
 
-      - name: Run Ansible playbook
-        run: |
-          ansible-playbook -i ${{ env.ANSIBLE_INVENTORY }} playbooks/site.yml -e "@ansible_vars.json" --ssh-extra-args='-o StrictHostKeyChecking=no'
-        shell: bash
+  #     - name: Run Ansible playbook
+  #       run: |
+  #         ansible-playbook -i ${{ env.ANSIBLE_INVENTORY }} playbooks/site.yml -e "@ansible_vars.json" --ssh-extra-args='-o StrictHostKeyChecking=no'
+  #       shell: bash
 
-      - name: Cleanup secrets file
-        if: always()
-        run: |
-          shred -u ansible_vars.json || rm -f ansible_vars.json || true
-        shell: bash
+  #     - name: Cleanup secrets file
+  #       if: always()
+  #       run: |
+  #         shred -u ansible_vars.json || rm -f ansible_vars.json || true
+  #       shell: bash
