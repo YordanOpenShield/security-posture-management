@@ -1,13 +1,16 @@
+resource "ansible_group" "tenant_hosts" {
+  name = "${var.name}-group"
+}
+
+resource "ansible_host" "tenant_host" {
+  name = hcloud_server.tenant_server.ipv4_address
+  groups = [ansible_group.tenant_hosts.name]
+}
+
 resource "ansible_playbook" "tenant_configure" {
   playbook = "./ansible/playbooks/tenant.yml"
+  name = ansible_host.tenant_host.name
   replayable = true
-
-  connection {
-    type        = "ssh"
-    host        = hcloud_server.tenant_server.ipv4_address
-    user        = locals.ansible_user
-    private_key = tls_private_key.ssh_key.private_key_pem
-  }
 
   extra_vars = {
     tenant_name = var.name
