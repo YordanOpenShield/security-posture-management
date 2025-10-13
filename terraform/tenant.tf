@@ -7,7 +7,7 @@ module "tenant" {
 }
 
 output "tenant_name" {
-  value = module.tenant.name
+  value = var.tenant
 }
 
 output "tenant_host" {
