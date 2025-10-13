@@ -32,11 +32,6 @@ variable "server_ram" {
   default     = 4
 }
 
-variable "server_location" {
-  description = "The location to create the server in"
-  type        = string
-}
-
 variable "volume_size" {
   description = "Size of the volume in GB"
   type        = number
