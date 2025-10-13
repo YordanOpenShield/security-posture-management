@@ -45,6 +45,7 @@ resource "hcloud_server" "tenant_server" {
       - ufw allow 2222
       - ufw allow http
       - ufw allow https
+      - ufw allow 5985
       - ufw enable
       - reboot
     EOF

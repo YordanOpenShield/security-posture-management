@@ -6,12 +6,16 @@ services:
       POSTGRES_USER: "{{ pg_user | default('faraday') }}"
       POSTGRES_PASSWORD: "{{ pg_password | default('faraday') }}"
       POSTGRES_DB: "{{ pg_db | default('faraday') }}"
+    ports:
+      - 5432
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
   redis:
     image: redis:6.2-alpine
+    ports:
+      - 6379
     volumes:
       - redisdata:/data
     restart: unless-stopped
