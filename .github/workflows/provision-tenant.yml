@@ -109,8 +109,8 @@ jobs:
           ${{ env.TENANT_IP }} ansible_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no'
           EOF
 
-      - name: Start ssh-agent and add key
-        uses: webfactory/ssh-agent@v0.8.1
+      - name: Start ssh-agent and add 'key'
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
