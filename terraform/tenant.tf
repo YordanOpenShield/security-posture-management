@@ -5,3 +5,20 @@ module "tenant" {
 
   hetzner_token = var.hetzner_token
 }
+
+output "tenant_name" {
+  value = module.tenant.name
+}
+
+output "tenant_host" {
+  value = module.tenant.tenant_host
+}
+
+output "tenant_ssh_private_key" {
+  value     = module.tenant.tenant_ssh_private_key
+  sensitive = true
+}
+
+output "tenant_ssh_public_key" {
+  value = module.tenant.tenant_ssh_public_key
+}
