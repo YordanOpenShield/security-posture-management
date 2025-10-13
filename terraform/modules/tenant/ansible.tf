@@ -8,7 +8,7 @@ resource "ansible_host" "tenant_host" {
 }
 
 resource "ansible_playbook" "tenant_configure" {
-  playbook = "./ansible/playbooks/tenant.yml"
+  playbook = "../ansible/playbooks/tenant.yml"
   name = ansible_host.tenant_host.name
   replayable = true
 
