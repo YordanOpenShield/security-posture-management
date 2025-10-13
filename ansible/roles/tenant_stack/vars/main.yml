@@ -1,0 +1,2 @@
+data_mount: /srv/faraday/data
+compose_dir: /opt/faraday

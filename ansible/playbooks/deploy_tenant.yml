@@ -1,0 +1,7 @@
+- name: Deploy Faraday stack to tenant host
+  hosts: tenant
+  become: true
+  gather_facts: yes
+
+  roles:
+    - tenant_stack

@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: "{{ pg_user | default('postgres') }}"
+      POSTGRES_PASSWORD: "{{ pg_password | default('postgres') }}"
+      POSTGRES_DB: "{{ pg_db | default('faraday') }}"
+    volumes:
+      - /srv/faraday/data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:6.2-alpine
+    volumes:
+      - /srv/faraday/data/redis:/data
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: "{{ rabbitmq_user | default('faraday') }}"
+      RABBITMQ_DEFAULT_PASS: "{{ rabbitmq_pass | default('changeme') }}"
+    ports:
+      - "15672:15672"
+    restart: unless-stopped
+
+  faraday:
+    image: faradaysec/faraday:latest
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    ports:
+      - "5985:5985"
+    volumes:
+      - /srv/faraday/data/faraday:/home/faraday/.faraday
+    restart: unless-stopped
