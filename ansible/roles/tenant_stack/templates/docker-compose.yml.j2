@@ -3,8 +3,8 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: "{{ pg_user | default('postgres') }}"
-      POSTGRES_PASSWORD: "{{ pg_password | default('postgres') }}"
+      POSTGRES_USER: "{{ pg_user | default('faraday') }}"
+      POSTGRES_PASSWORD: "{{ pg_password | default('faraday') }}"
       POSTGRES_DB: "{{ pg_db | default('faraday') }}"
     volumes:
       - /srv/faraday/data/postgres:/var/lib/postgresql/data
@@ -19,8 +19,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     environment:
-      RABBITMQ_DEFAULT_USER: "{{ rabbitmq_user | default('faraday') }}"
-      RABBITMQ_DEFAULT_PASS: "{{ rabbitmq_pass | default('changeme') }}"
+      RABBITMQ_DEFAULT_USER: "{{ rmq_user | default('faraday') }}"
+      RABBITMQ_DEFAULT_PASS: "{{ rmq_password | default('changeme') }}"
     ports:
       - "15672:15672"
     restart: unless-stopped
@@ -35,4 +35,16 @@ services:
       - "5985:5985"
     volumes:
       - /srv/faraday/data/faraday:/home/faraday/.faraday
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - faraday
     restart: unless-stopped

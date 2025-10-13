@@ -1,3 +1,6 @@
-pg_user: postgres
+pg_user: faraday
 pg_db: faraday
-rabbitmq_user: faraday
+rmq_user: faraday
+
+data_mount: /srv/faraday/data
+compose_dir: /opt/faraday

@@ -9,6 +9,46 @@ resource "hcloud_server" "tenant_server" {
     solution = "spm"
   }
 
+  user_data = <<-EOF
+    #cloud-config
+    packages:
+      - sudo
+      - curl
+      - ca-certificates
+      - fail2ban
+      - ufw
+    package_update: true
+    package_upgrade: true
+    users:
+      - name: ${local.ansible_user}
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        ssh-authorized-keys:
+          - ${tls_private_key.ssh_key.public_key_openssh}
+    write_files:
+      - path: /etc/ssh/sshd_config.d/ssh-hardening.conf
+        content: |
+          PermitRootLogin no
+          PasswordAuthentication no
+          Port 2222
+          KbdInteractiveAuthentication no
+          ChallengeResponseAuthentication no
+          MaxAuthTries 2
+          AllowTcpForwarding no
+          X11Forwarding no
+          AllowAgentForwarding no
+          AuthorizedKeysFile .ssh/authorized_keys
+          AllowUsers ${local.ansible_user}
+    runcmd:
+      - printf "[sshd]\nenabled = true\nport = ssh, 2222\nbanaction = iptables-multiport" > /etc/fail2ban/jail.local
+      - systemctl enable fail2ban
+      - ufw allow 2222
+      - ufw allow http
+      - ufw allow https
+      - ufw enable
+      - reboot
+    EOF
+
   depends_on = [
     hcloud_ssh_key.ssh_key
   ]
