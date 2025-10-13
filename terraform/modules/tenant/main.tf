@@ -1,7 +1,7 @@
 resource "hcloud_server" "tenant_server" {
   name        = "spm-tenant-${var.name}"
   image       = var.server_image
-  server_type = data.hcloud_server_type.selected.name
+  server_type = local.chosen_server_type
   # location    = var.server_location
   ssh_keys    = [hcloud_ssh_key.ssh_key.id]
 
