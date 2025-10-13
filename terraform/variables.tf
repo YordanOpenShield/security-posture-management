@@ -13,5 +13,5 @@ variable "tenant" {
 variable "tenant_location" {
   description = "Location for the tenant's resources"
   type        = string
-  default     = null
+  default     = "nbg1"
 }
