@@ -17,7 +17,7 @@ on:
         default: 'false'
 
 jobs:
-  provision-infrastructure:
+  provision-tenant:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
