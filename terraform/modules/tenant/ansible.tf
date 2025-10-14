@@ -12,6 +12,8 @@ resource "ansible_playbook" "tenant_configure" {
   name = ansible_host.tenant_host.name
   replayable = true
 
+  verbosity = 6
+
   extra_vars = {
     tenant_name = var.name
     pg_user     = local.postgres_user
