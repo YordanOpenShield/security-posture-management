@@ -9,6 +9,7 @@ resource "hcloud_server" "tenant_server" {
     solution = "spm"
   }
 
+  # TODO: Harden SSH further
   user_data = <<-EOF
     #cloud-config
     packages:
@@ -21,6 +22,7 @@ resource "hcloud_server" "tenant_server" {
     package_upgrade: true
     users:
       - name: ${local.ansible_user}
+        password: test1234
         sudo: ALL=(ALL) NOPASSWD:ALL
         shell: /bin/bash
         ssh-authorized-keys:
@@ -29,7 +31,7 @@ resource "hcloud_server" "tenant_server" {
       - path: /etc/ssh/sshd_config.d/ssh-hardening.conf
         content: |
           PermitRootLogin no
-          PasswordAuthentication no
+          PasswordAuthentication yes
           Port 2222
           KbdInteractiveAuthentication no
           ChallengeResponseAuthentication no
