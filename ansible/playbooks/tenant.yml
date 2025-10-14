@@ -9,6 +9,13 @@
     pg_db: faraday
 
   tasks:
+    - name: create compose dir
+      file:
+        path: "{{ compose_dir }}"
+        state: directory
+        owner: 1000
+        group: 1000
+        mode: "0755"
 
     - name: render docker-compose.yml
       template:
