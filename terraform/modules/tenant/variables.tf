@@ -37,3 +37,23 @@ variable "volume_size" {
   type        = number
   default     = 50
 }
+
+# == Application / provisioning variables ==
+
+variable "pg_user" {
+  description = "Postgres user for the application database"
+  type        = string
+  default     = "faraday"
+}
+
+variable "pg_db" {
+  description = "Postgres database name for the application"
+  type        = string
+  default     = "faraday"
+}
+
+variable "app_directory" {
+  description = "Directory where the application will be installed"
+  type        = string
+  default     = "/opt/faraday"
+}
