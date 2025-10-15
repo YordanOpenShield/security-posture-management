@@ -5,6 +5,10 @@ resource "local_file" "docker_compose" {
         pg_user     = var.pg_user
         pg_password = random_password.pg_password.result
     })
+
+    depends_on = [
+        hcloud_server.tenant_server
+    ]
 }
 
 resource "local_file" "nginx_config" {
@@ -13,6 +17,10 @@ resource "local_file" "nginx_config" {
         upstream_port         = "5985"
         upstream_ws_port      = "9000"
     })
+
+    depends_on = [
+        hcloud_server.tenant_server
+    ]
 }
 
 # resource "null_resource" ""
