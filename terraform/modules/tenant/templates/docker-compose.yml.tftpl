@@ -3,9 +3,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: "${coalesce(pg_user, 'faraday')}"
-      POSTGRES_PASSWORD: "${coalesce(pg_password, 'faraday')}"
-      POSTGRES_DB: "${coalesce(pg_db, 'faraday')}"
+      POSTGRES_USER: ${coalesce(pg_user, "faraday")}
+      POSTGRES_PASSWORD: ${coalesce(pg_password, "faraday")}
+      POSTGRES_DB: ${coalesce(pg_db, "faraday")}
     ports:
       - 5432
     volumes:
@@ -29,9 +29,9 @@ services:
     environment:
       - LISTEN_ADDR=0.0.0.0
       - PGSQL_HOST=postgres
-      - PGSQL_USER=${coalesce(pg_user, 'faraday')}
-      - PGSQL_PASSWD=${coalesce(pg_password, 'faraday')}
-      - PGSQL_DBNAME=${coalesce(pg_db, 'faraday')}
+      - PGSQL_USER=${coalesce(pg_user, "faraday")}
+      - PGSQL_PASSWD=${coalesce(pg_password, "faraday")}
+      - PGSQL_DBNAME=${coalesce(pg_db, "faraday")}
       - REDIS_SERVER=redis
     ports:
       - "5985:5985"
