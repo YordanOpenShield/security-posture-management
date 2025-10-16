@@ -1,11 +1,5 @@
 # !/bin/bash
 
-# Check if Nginx is installed
-if ! command -v nginx &> /dev/null; then
-    echo "Nginx is not installed. Please run the install-nginx.sh script first."
-    exit 1
-fi
-
 # Request LetsEncrypt certificate for the domain
 sudo certbot certonly --nginx -d ${faraday_host} --non-interactive --agree-tos -m certbot@cyberdef.cc --redirect > ${faraday_directory}/certbot.log 2>&1
 
