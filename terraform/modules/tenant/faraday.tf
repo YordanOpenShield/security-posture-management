@@ -19,7 +19,7 @@ resource "local_file" "install_nginx_sh" {
 
 resource "local_file" "configure_faraday_nginx_sh" {
   content  = templatefile("${local.templates_dir}/configure-faraday-nginx.sh.tftpl", {
-    faraday_host      = "faraday.${var.spm_subdomain}.${var.base_domain}"
+    faraday_host      = "faraday.${var.name}.${var.spm_subdomain}.${var.base_domain}"
     faraday_directory = var.faraday_directory
   })
   filename = "${local.render_dir}/configure-faraday-nginx.sh"

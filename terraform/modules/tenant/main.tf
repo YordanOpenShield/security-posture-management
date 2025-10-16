@@ -24,7 +24,7 @@ resource "hcloud_server" "tenant_server" {
     package_update: true
     package_upgrade: true
     users:
-      - name: ${local.ansible_user}
+      - name: ${var.provision_user}
         sudo: ALL=(ALL) NOPASSWD:ALL
         shell: /bin/bash
         ssh-authorized-keys:
@@ -42,7 +42,7 @@ resource "hcloud_server" "tenant_server" {
           X11Forwarding no
           AllowAgentForwarding no
           AuthorizedKeysFile .ssh/authorized_keys
-          AllowUsers ${local.ansible_user}
+          AllowUsers ${var.provision_user}
     runcmd:
       - printf "[sshd]\nenabled = true\nport = ssh, 2222\nbanaction = iptables-multiport" > /etc/fail2ban/jail.local
       - systemctl enable fail2ban
