@@ -28,7 +28,7 @@ resource "local_file" "configure_faraday_nginx_sh" {
 resource "null_resource" "provision_faraday_scripts" {
   provisioner "file" {
     source      = local.render_dir
-    destination = "${var.faraday_directory}/scripts"
+    destination = "/tmp/scripts"
 
     connection {
       type        = "ssh"
@@ -41,12 +41,12 @@ resource "null_resource" "provision_faraday_scripts" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod +x ${var.faraday_directory}/scripts/install-faraday.sh",
-      "sudo chmod +x ${var.faraday_directory}/scripts/install-nginx.sh",
-      "sudo chmod +x ${var.faraday_directory}/scripts/configure-faraday-nginx.sh",
-      "sudo ${var.faraday_directory}/scripts/install-faraday.sh ${var.faraday_version}",
-      "sudo ${var.faraday_directory}/scripts/install-nginx.sh",
-      "sudo ${var.faraday_directory}/scripts/configure-faraday-nginx.sh"
+      "sudo chmod +x /tmp/scripts/install-faraday.sh",
+      "sudo chmod +x /tmp/scripts/install-nginx.sh",
+      "sudo chmod +x /tmp/scripts/configure-faraday-nginx.sh",
+      "sudo /tmp/scripts/install-faraday.sh ${var.faraday_version}",
+      "sudo /tmp/scripts/install-nginx.sh",
+      "sudo /tmp/scripts/configure-faraday-nginx.sh"
     ]
 
     connection {
