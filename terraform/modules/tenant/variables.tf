@@ -77,13 +77,6 @@ variable "faraday_version" {
   default     = "latest"
 }
 
-variable "faraday_password" {
-  description = "Administrator password to set for Faraday"
-  type        = string
-  sensitive   = true
-  default     = null
-}
-
 # == Domain/host variables ==
 
 variable "spm_subdomain" {

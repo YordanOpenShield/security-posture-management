@@ -7,7 +7,7 @@ resource "local_file" "install_faraday_sh" {
   content  = templatefile("${local.templates_dir}/install-faraday.sh.tftpl", {
     faraday_directory = var.faraday_directory
     faraday_version   = var.faraday_version
-    faraday_password  = var.faraday_password
+    faraday_password  = random_password.faraday_password.result
   })
   filename = "${local.render_dir}/install-faraday.sh"
 }
@@ -28,7 +28,7 @@ resource "local_file" "configure_faraday_nginx_sh" {
 resource "null_resource" "provision_faraday_scripts" {
   provisioner "file" {
     source      = local.render_dir
-    destination = "/home/${var.provision_user}/faraday_tmp"
+    destination = "${var.faraday_directory}/scripts"
 
     connection {
       type        = "ssh"
@@ -41,12 +41,12 @@ resource "null_resource" "provision_faraday_scripts" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod +x /home/${var.provision_user}/faraday_tmp/install-faraday.sh",
-      "sudo chmod +x /home/${var.provision_user}/faraday_tmp/install-nginx.sh",
-      "sudo chmod +x /home/${var.provision_user}/faraday_tmp/configure-faraday-nginx.sh",
-      "sudo /home/${var.provision_user}/faraday_tmp/install-faraday.sh ${var.faraday_version}",
-      "sudo /home/${var.provision_user}/faraday_tmp/install-nginx.sh",
-      "sudo /home/${var.provision_user}/faraday_tmp/configure-faraday-nginx.sh"
+      "sudo chmod +x ${var.faraday_directory}/scripts/install-faraday.sh",
+      "sudo chmod +x ${var.faraday_directory}/scripts/install-nginx.sh",
+      "sudo chmod +x ${var.faraday_directory}/scripts/configure-faraday-nginx.sh",
+      "sudo ${var.faraday_directory}/scripts/install-faraday.sh ${var.faraday_version}",
+      "sudo ${var.faraday_directory}/scripts/install-nginx.sh",
+      "sudo ${var.faraday_directory}/scripts/configure-faraday-nginx.sh"
     ]
 
     connection {
@@ -63,6 +63,7 @@ resource "null_resource" "provision_faraday_scripts" {
         cloudflare_dns_record.faraday,
         local_file.install_faraday_sh,
         local_file.install_nginx_sh,
-        local_file.configure_faraday_nginx_sh
+        local_file.configure_faraday_nginx_sh,
+        random_password.faraday_password
     ]
 }
