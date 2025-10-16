@@ -30,6 +30,7 @@ resource "null_resource" "provision_faraday_scripts" {
     source      = local.render_dir
     destination = "/tmp/scripts"
 
+
     connection {
       type        = "ssh"
       host        = hcloud_server.tenant_server.ipv4_address
@@ -48,7 +49,9 @@ resource "null_resource" "provision_faraday_scripts" {
       "sudo chmod +x /tmp/scripts/configure-faraday-nginx.sh",
       "sudo /tmp/scripts/install-faraday.sh ${var.faraday_version}",
       "sudo /tmp/scripts/install-nginx.sh",
-      "sudo /tmp/scripts/configure-faraday-nginx.sh"
+      "sudo /tmp/scripts/configure-faraday-nginx.sh",
+      # Cleanup
+      "rm -rf /tmp/scripts"
     ]
 
     connection {
