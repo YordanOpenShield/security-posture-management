@@ -1,0 +1,70 @@
+# !/bin/bash
+
+# A helper script to install Faraday on an Ubuntu server.
+# OS: Ubuntu 20.04 or later
+# Usage: ./install-faraday.sh <VERSION|latest>
+# Example: ./install-faraday.sh latest
+#
+# Author: YordanOpenShield
+
+# Arguments
+if [[ -z "$1" ]]; then
+    echo "Usage: $0 <VERSION|latest>"
+    exit 1
+fi
+VERSION="$1"
+
+# Update package lists
+sudo apt-get update
+
+# Create necessary directories
+sudo mkdir -p ${faraday_directory}
+cd ${faraday_directory}
+
+# Get latest version tag
+VERSION=${faraday_version}
+if [[ "$VERSION" == "latest" ]]; then
+    echo "Fetching latest version from GitHub..."
+    VERSION=$(curl -s https://api.github.com/repos/infobyte/faraday/releases/latest | grep -oP '"tag_name":\s*"\K(.*)(?=")')
+    if [[ -z "$VERSION" ]]; then
+        echo "Failed to fetch latest version."
+        exit 1
+    fi
+    echo "Latest version is $VERSION"
+fi
+
+# Download Faraday
+sudo wget https://github.com/infobyte/faraday/releases/download/$VERSION/faraday-server_amd64.deb
+
+# Make sure dependencies are installed
+sudo apt-get install -y postgresql redis python3 python3-pip
+
+# Install Faraday
+sudo dpkg -i ${faraday_directory}/faraday-server_amd64.deb || sudo apt install -f ${faraday_directory}/faraday-server_amd64.deb
+
+# Add current user to faraday group
+sudo usermod -aG faraday $(whoami)
+
+# Initialize Faraday database
+faraday-manage initdb
+
+# Change faraday's admin password
+faraday-manage change-password --username faraday --password ${faraday_password}
+
+# Start and enable Faraday services
+systemctl start faraday-server
+systemctl enable faraday-server
+
+systemctl start faraday-worker
+systemctl enable faraday-worker
+
+systemctl start faraday-worker-reports
+systemctl enable faraday-worker-reports
+
+# Make sure Faraday is running
+if systemctl is-active --quiet faraday-server; then
+    echo "Faraday server is running."
+else
+    echo "Faraday server failed to start."
+    exit 1
+fi

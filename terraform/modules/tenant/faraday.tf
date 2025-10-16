@@ -1,26 +1,68 @@
-resource "local_file" "docker_compose" {
-    filename = "${var.app_directory}/docker-compose.yml"
-    content = templatefile("${path.module}/templates/docker-compose.yml.tftpl", {
-        pg_db       = var.pg_db
-        pg_user     = var.pg_user
-        pg_password = random_password.pg_password.result
-    })
-
-    depends_on = [
-        hcloud_server.tenant_server
-    ]
+locals {
+  templates_dir = "${path.module}/templates"
+  render_dir    = "${path.module}/_rendered"
 }
 
-resource "local_file" "nginx_config" {
-    filename = "${var.app_directory}/nginx.conf"
-    content  = templatefile("${path.module}/templates/nginx.conf.tftpl", {
-        upstream_port         = "5985"
-        upstream_ws_port      = "9000"
-    })
-
-    depends_on = [
-        hcloud_server.tenant_server
-    ]
+resource "local_file" "install_faraday_sh" {
+  content  = templatefile("${local.templates_dir}/install-faraday.sh.tftpl", {
+    faraday_directory = var.faraday_directory
+    faraday_version   = var.faraday_version
+    faraday_password  = var.faraday_password
+  })
+  filename = "${local.render_dir}/install-faraday.sh"
 }
 
-# resource "null_resource" ""
+resource "local_file" "install_nginx_sh" {
+  content  = templatefile("${local.templates_dir}/install-nginx.sh.tftpl", {})
+  filename = "${local.render_dir}/install-nginx.sh"
+}
+
+resource "local_file" "configure_faraday_nginx_sh" {
+  content  = templatefile("${local.templates_dir}/configure-faraday-nginx.sh.tftpl", {
+    faraday_host      = "faraday.${var.spm_subdomain}.${var.base_domain}"
+    faraday_directory = var.faraday_directory
+  })
+  filename = "${local.render_dir}/configure-faraday-nginx.sh"
+}
+
+resource "null_resource" "provision_faraday_scripts" {
+  provisioner "file" {
+    source      = local.render_dir
+    destination = "/home/${var.provision_user}/faraday_tmp"
+
+    connection {
+      type        = "ssh"
+      host        = hcloud_server.tenant_server.ipv4_address
+      user        = var.provision_user
+      private_key = tls_private_key.ssh_key.private_key_pem
+      agent       = false
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo chmod +x /home/${var.provision_user}/faraday_tmp/install-faraday.sh",
+      "sudo chmod +x /home/${var.provision_user}/faraday_tmp/install-nginx.sh",
+      "sudo chmod +x /home/${var.provision_user}/faraday_tmp/configure-faraday-nginx.sh",
+      "sudo /home/${var.provision_user}/faraday_tmp/install-faraday.sh ${var.faraday_version}",
+      "sudo /home/${var.provision_user}/faraday_tmp/install-nginx.sh",
+      "sudo /home/${var.provision_user}/faraday_tmp/configure-faraday-nginx.sh"
+    ]
+
+    connection {
+      type        = "ssh"
+      host        = hcloud_server.tenant_server.ipv4_address
+      user        = var.provision_user
+      private_key = tls_private_key.ssh_key.private_key_pem
+      agent       = false
+      timeout     = "10m"
+    }
+  }
+
+    depends_on = [
+        cloudflare_dns_record.faraday,
+        local_file.install_faraday_sh,
+        local_file.install_nginx_sh,
+        local_file.configure_faraday_nginx_sh
+    ]
+}

@@ -5,6 +5,13 @@ variable "hetzner_token" {
   type        = string
 }
 
+# == Cloudflare Token ==
+
+variable "cloudflare_token" {
+  description = "API token for Cloudflare"
+  type        = string
+}
+
 # == Tenant Variables ==
 
 variable "name" {
@@ -40,6 +47,12 @@ variable "volume_size" {
 
 # == Application / provisioning variables ==
 
+variable "provision_user" {
+  description = "User to create on the server for provisioning"
+  type        = string
+  default     = "deploy"
+}
+
 variable "pg_user" {
   description = "Postgres user for the application database"
   type        = string
@@ -52,8 +65,35 @@ variable "pg_db" {
   default     = "faraday"
 }
 
-variable "app_directory" {
+variable "faraday_directory" {
   description = "Directory where the application will be installed"
   type        = string
   default     = "/opt/faraday"
+}
+
+variable "faraday_version" {
+  description = "Faraday version to install or 'latest'"
+  type        = string
+  default     = "latest"
+}
+
+variable "faraday_password" {
+  description = "Administrator password to set for Faraday"
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
+# == Domain/host variables ==
+
+variable "spm_subdomain" {
+  description = "Subdomain for the SPM instance"
+  type        = string
+  default     = "spm"
+}
+
+variable "base_domain" {
+  description = "Domain for the Faraday instance"
+  type        = string
+  default     = "openshield.io"
 }

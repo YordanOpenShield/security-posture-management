@@ -1,0 +1,14 @@
+# !/bin/bash
+
+# Install Nginx
+sudo apt-get update
+sudo apt-get install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+# Install certbot
+sudo apt-get install -y certbot python3-certbot-nginx
+
+# Adjust firewall to allow HTTP and HTTPS traffic
+sudo ufw allow http
+sudo ufw allow https

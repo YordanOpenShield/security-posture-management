@@ -6,3 +6,9 @@ data "hcloud_server_type" "selected" {
   }
   name = each.key
 }
+
+data "cloudflare_zone" "openshield" {
+  filter = {
+    name = var.base_domain
+  }
+}
