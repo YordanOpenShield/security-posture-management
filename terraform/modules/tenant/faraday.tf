@@ -33,6 +33,7 @@ resource "null_resource" "provision_faraday_scripts" {
     connection {
       type        = "ssh"
       host        = hcloud_server.tenant_server.ipv4_address
+      port        = 2222
       user        = var.provision_user
       private_key = tls_private_key.ssh_key.private_key_pem
       agent       = false
