@@ -7,13 +7,6 @@
 #
 # Author: YordanOpenShield
 
-# Arguments
-if [[ -z "$1" ]]; then
-    echo "Usage: $0 <VERSION|latest>"
-    exit 1
-fi
-VERSION="$1"
-
 # Update package lists
 sudo apt-get update
 
@@ -23,14 +16,20 @@ cd ${faraday_directory}
 
 # Get latest version tag
 VERSION=${faraday_version}
-if [[ "$VERSION" == "latest" ]]; then
-    echo "Fetching latest version from GitHub..."
-    VERSION=$(curl -s https://api.github.com/repos/infobyte/faraday/releases/latest | grep -oP '"tag_name":\s*"\K(.*)(?=")')
-    if [[ -z "$VERSION" ]]; then
-        echo "Failed to fetch latest version."
-        exit 1
-    fi
-    echo "Latest version is $VERSION"
+if [ -z "$VERSION" ] || [ "$VERSION" = "latest" ]; then
+  echo "Fetching latest Faraday release from GitHub..."
+  # prefer jq if available
+  if command -v jq >/dev/null 2>&1; then
+    VERSION=$(curl -s https://api.github.com/repos/infobyte/faraday/releases/latest | jq -r .tag_name)
+  else
+    VERSION=$(curl -s https://api.github.com/repos/infobyte/faraday/releases/latest | grep -oP '"tag_name":\s*"\K(.*)(?=")' || true)
+  fi
+
+  if [ -z "$VERSION" ]; then
+    echo "Failed to determine latest Faraday version."
+    exit 1
+  fi
+  echo "Latest version is $VERSION"
 fi
 
 # Download Faraday
