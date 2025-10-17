@@ -45,11 +45,6 @@ variable "volume_size" {
   default     = 50
 }
 
-variable "refresh_ssh_key" {
-  description = "If true, forces regeneration of the SSH key pair for the tenant"
-  type        = bool
-}
-
 # == Application / provisioning variables ==
 
 variable "provision_user" {

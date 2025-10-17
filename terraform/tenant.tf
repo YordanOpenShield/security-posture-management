@@ -5,8 +5,6 @@ module "tenant" {
 
   hetzner_token = var.hetzner_token
   cloudflare_token = var.cloudflare_token
-
-  refresh_ssh_key = var.refresh_ssh_key
 }
 
 output "tenant_name" {

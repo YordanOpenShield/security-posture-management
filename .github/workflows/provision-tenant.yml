@@ -10,11 +10,6 @@ on:
         description: 'Tenant ID'
         required: true
         default: 'demo'
-      refresh_ssh_key:
-        type: boolean
-        description: 'Refresh SSH key'
-        required: false
-        default: 'false'
       destroy:
         type: boolean
         description: 'Destroy tenant'
@@ -43,17 +38,10 @@ jobs:
         env:
           TF_VAR_hetzner_token: ${{ secrets.HETZNER_TOKEN }}
           TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
-          TF_VAR_refresh_ssh_key: ${{ github.event.inputs.refresh_ssh_key || 'false' }}
         run: |
           set -e
           # Build terraform -var arguments conditionally from workflow inputs
           ARGS=("-var" "tenant=${{ github.event.inputs.tenant }}")
-          
-          # Handle refresh_ssh_key input
-          if [ "${{ github.event.inputs.refresh_ssh_key }}" = "true" ]; then
-            echo "Refreshing SSH key as requested."
-            ARGS+=("-var" "refresh_ssh_key=true")
-          fi
 
           terraform apply "${ARGS[@]}" -auto-approve
 
