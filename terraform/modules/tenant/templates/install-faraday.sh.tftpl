@@ -39,7 +39,7 @@ sudo wget https://github.com/infobyte/faraday/releases/download/$VERSION/faraday
 sudo apt-get install -y postgresql redis python3 python3-pip
 
 # Install Faraday
-sudo dpkg -i ${faraday_directory}/faraday-server_amd64.deb || sudo apt install -f ${faraday_directory}/faraday-server_amd64.deb
+echo y | sudo dpkg -i ${faraday_directory}/faraday-server_amd64.deb || echo y | sudo apt install -f ${faraday_directory}/faraday-server_amd64.deb
 
 # Add current user to faraday group
 sudo usermod -aG faraday $(whoami)
