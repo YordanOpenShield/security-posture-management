@@ -26,6 +26,10 @@ resource "local_file" "configure_faraday_nginx_sh" {
 }
 
 resource "null_resource" "provision_faraday_scripts" {
+  triggers = {
+    always_run = timestamp()
+  }
+  
   provisioner "file" {
     source      = local.render_dir
     destination = "/tmp/scripts"
@@ -47,7 +51,7 @@ resource "null_resource" "provision_faraday_scripts" {
       "sudo chmod +x /tmp/scripts/install-faraday.sh",
       "sudo chmod +x /tmp/scripts/install-nginx.sh",
       "sudo chmod +x /tmp/scripts/configure-faraday-nginx.sh",
-      "sudo /tmp/scripts/install-faraday.sh ${var.faraday_version}",
+      "sudo /tmp/scripts/install-faraday.sh",
       "sudo /tmp/scripts/install-nginx.sh",
       "sudo /tmp/scripts/configure-faraday-nginx.sh",
       # Cleanup
