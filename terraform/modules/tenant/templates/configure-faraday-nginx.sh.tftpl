@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/usr/bin/env bash
 
 # Request LetsEncrypt certificate for the domain
 sudo certbot certonly --nginx -d ${faraday_host} --non-interactive --agree-tos -m certbot@cyberdef.cc --redirect > ${faraday_directory}/certbot.log 2>&1
@@ -6,7 +6,7 @@ sudo certbot certonly --nginx -d ${faraday_host} --non-interactive --agree-tos -
 # Extract certificate and key paths
 CERT_PATH=$(grep -iE 'certificate is saved at:' ${faraday_directory}/certbot.log | awk '{print $5}')
 KEY_PATH=$(grep -iE 'key is saved at:' ${faraday_directory}/certbot.log | awk '{print $5}')
-if [[ -z "$CERT_PATH" || -z "$KEY_PATH" ]]; then
+if [ -z "$CERT_PATH" ] || [ -z "$KEY_PATH" ]; then
     echo "Failed to obtain SSL certificate. Check certbot log at ${faraday_directory}/certbot.log"
     exit 1
 fi
@@ -20,7 +20,7 @@ sudo ln -sf /etc/nginx/sites-available/faraday.conf /etc/nginx/sites-enabled/far
 
 # Test Nginx configuration
 sudo nginx -t
-if [[ $? -ne 0 ]]; then
+if [ $? -ne 0 ]; then
     echo "Nginx configuration test failed. Please check the configuration file."
     exit 1
 fi
