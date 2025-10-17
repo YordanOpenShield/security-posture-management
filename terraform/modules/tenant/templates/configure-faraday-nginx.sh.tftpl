@@ -25,5 +25,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Wait until no jobs for systemd-sysctl remain
+while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done
+
 # Reload Nginx to apply the new configuration
 sudo systemctl reload nginx
