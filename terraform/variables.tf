@@ -18,3 +18,9 @@ variable "tenant" {
   description = "Name of the tenant"
   type        = string
 }
+
+variable "refresh_ssh_key" {
+  description = "If true, forces regeneration of the SSH key pair for the tenant"
+  type        = bool
+  default     = false
+}

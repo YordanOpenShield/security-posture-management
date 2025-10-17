@@ -17,6 +17,9 @@ resource "hcloud_ssh_key" "ssh_key" {
   # infrastructure is removed. To allow deletion deliberately, remove this
   # block or override with the -target option.
   lifecycle {
-    prevent_destroy = true
+    precondition {
+      condition = var.refresh_ssh_key == true
+      error_message = "SSH key regeneration is required."
+    }
   }
 }
