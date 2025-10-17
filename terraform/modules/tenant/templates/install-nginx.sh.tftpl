@@ -1,10 +1,16 @@
 # !/bin/bash
 
+# Wait until no jobs for systemd-sysctl remain
+while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done
+
 # Install Nginx
 sudo apt-get update
 sudo apt-get install -y nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
+
+# Wait until no jobs for systemd-sysctl remain
+while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done
 
 # Install certbot
 sudo apt-get install -y certbot python3-certbot-nginx
