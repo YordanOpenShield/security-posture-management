@@ -12,14 +12,8 @@ resource "hcloud_ssh_key" "ssh_key" {
     solution = "spm"
   }
 
-  # Prevent accidental deletion of SSH key on terraform destroy.
-  # This ensures users keep access credentials even if the rest of the tenant
-  # infrastructure is removed. To allow deletion deliberately, remove this
-  # block or override with the -target option.
   lifecycle {
-    precondition {
-      condition = var.refresh_ssh_key == true
-      error_message = "SSH key regeneration is required."
-    }
+    # Force regeneration of the SSH key pair if refresh_ssh_key is true
+    replace_triggered_by = var.refresh_ssh_key ? [ timestamp() ] : []
   }
 }
