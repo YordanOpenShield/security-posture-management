@@ -14,6 +14,6 @@ resource "hcloud_ssh_key" "ssh_key" {
 
   lifecycle {
     # Force regeneration of the SSH key pair if refresh_ssh_key is true
-    replace_triggered_by = var.refresh_ssh_key ? [ timestamp() ] : []
+    replace_triggered_by = [ var.refresh_ssh_key ? timestamp() : "" ]
   }
 }
