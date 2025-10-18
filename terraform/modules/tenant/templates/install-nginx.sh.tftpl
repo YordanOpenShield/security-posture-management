@@ -1,11 +1,12 @@
 # !/bin/bash
 
+echo "Starting Nginx installation..."
+
 # Wait until no jobs for systemd-sysctl remain
 while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done
 
 # Install Nginx
-sudo apt-get update
-sudo apt-get install -y nginx
+sudo apt install -y nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
@@ -13,7 +14,7 @@ sudo systemctl enable nginx
 while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done
 
 # Install certbot
-sudo apt-get install -y certbot python3-certbot-nginx
+sudo apt install -y certbot python3-certbot-nginx
 
 # Adjust firewall to allow HTTP and HTTPS traffic
 sudo ufw allow http
