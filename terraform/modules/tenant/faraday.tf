@@ -48,6 +48,7 @@ resource "null_resource" "provision_faraday_scripts" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo apt update -y",
       # Make sure postgres and redis are running before installing Faraday
       "while ! sudo systemctl is-active --quiet postgresql; do echo 'Waiting for PostgreSQL to start...'; sleep 5; done",
       "while ! sudo systemctl is-active --quiet redis; do echo 'Waiting for Redis to start...'; sleep 5; done",
