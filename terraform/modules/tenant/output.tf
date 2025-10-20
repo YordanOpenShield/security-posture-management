@@ -14,7 +14,7 @@ output "ssh_public_key" {
 output "faraday_credentials" {
   value = {
     url      = "https://faraday.${var.name}.${var.spm_subdomain}.${var.base_domain}"
-    username = "faraday"
+    username = local.faraday_user
     password = random_password.faraday_password.result
   }
   sensitive = true
