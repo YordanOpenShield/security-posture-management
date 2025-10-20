@@ -51,7 +51,7 @@ resource "null_resource" "provision_faraday_scripts" {
         "sudo mkdir -p /tmp/provision-logs && sudo chown ${var.provision_user}:${var.provision_user} /tmp/provision-logs",
         "export DEBIAN_FRONTEND=noninteractive",
         # wait for cloud-init (if present) and for systemd jobs to settle
-        "cloud-init status --wait > /dev/null 2>&1 || true",
+        "until sudo cloud-init status | grep -q 'done'; do sleep 1; done || true",
         "timeout=60; while systemctl list-jobs | grep -q systemd-sysctl && [ $timeout -gt 0 ]; do sleep 1; timeout=$((timeout-1)); done || true",
         # ensure package index is fresh
         "sudo apt update -y",
