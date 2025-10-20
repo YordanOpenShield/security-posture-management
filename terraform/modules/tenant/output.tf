@@ -15,7 +15,7 @@ output "tenant_faraday_credentials" {
   value = {
     url      = "https://faraday.${var.name}.${var.spm_subdomain}.${var.base_domain}"
     username = "admin"
-    password = random_password.faraday_admin_password.result
+    password = random_password.faraday_password.result
   }
   sensitive = true
 }
