@@ -46,38 +46,42 @@ resource "null_resource" "provision_faraday_scripts" {
         }
     }
 
-    provisioner "remote-exec" {
-        inline = [
-        # Set non-interactive frontend for apt
-        "export DEBIAN_FRONTEND=noninteractive",
-        # Wait for a minute
-        "cloud-init status --wait > /dev/null 2>&1",
-        # Update package lists
-        "sudo apt update -y",
-        # Make sure postgres and redis are running before installing Faraday
-        "while ! sudo systemctl is-active --quiet postgresql; do echo 'Waiting for PostgreSQL to start...'; sleep 5; done",
-        "while ! sudo systemctl is-active --quiet redis; do echo 'Waiting for Redis to start...'; sleep 5; done",
-        # Execute installation and configuration scripts
-        "sudo chmod +x /tmp/scripts/install-faraday.sh",
-        "sudo chmod +x /tmp/scripts/install-nginx.sh",
-        "sudo chmod +x /tmp/scripts/configure-faraday-nginx.sh",
-        "sudo /tmp/scripts/install-faraday.sh",
-        "sudo /tmp/scripts/install-nginx.sh",
-        "sudo /tmp/scripts/configure-faraday-nginx.sh",
-        # Cleanup
-        "rm -rf /tmp/scripts"
-        ]
+  provisioner "remote-exec" {
+    inline = [
+    # make log dir and set non-interactive frontend
+    "sudo mkdir -p /tmp/provision-logs && sudo chown ${var.provision_user}:${var.provision_user} /tmp/provision-logs",
+    "export DEBIAN_FRONTEND=noninteractive",
+    # wait for cloud-init (if present) and for systemd jobs to settle
+    "cloud-init status --wait > /dev/null 2>&1 || true",
+    "timeout=60; while systemctl list-jobs | grep -q systemd-sysctl && [ $timeout -gt 0 ]; do sleep 1; timeout=$((timeout-1)); done || true",
+    # ensure package index is fresh
+    "sudo apt update -y",
+    # wait for postgres and redis services if they're expected from packages
+    "for svc in postgresql redis; do tries=0; until sudo systemctl is-active --quiet $svc || [ $tries -ge 30 ]; do echo 'Waiting for' $svc; sleep 2; tries=$((tries+1)); done; done",
+    # make scripts executable
+    "sudo chmod +x /tmp/scripts/*.sh",
 
-        connection {
-        type        = "ssh"
-        host        = hcloud_server.tenant_server.ipv4_address
-        port        = 2222
-        user        = var.provision_user
-        private_key = tls_private_key.ssh_key.private_key_pem
-        agent       = false
-        timeout     = "10m"
-        }
+    # run each script under bash -x and capture logs; on failure print the tail and exit non-zero
+    "sudo bash -x /tmp/scripts/install-faraday.sh >> /tmp/provision-logs/install-faraday.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/install-faraday.log; exit 1; }",
+    "sudo bash -x /tmp/scripts/install-nginx.sh >> /tmp/provision-logs/install-nginx.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/install-nginx.log; exit 1; }",
+    "sudo bash -x /tmp/scripts/configure-faraday-nginx.sh >> /tmp/provision-logs/configure-faraday-nginx.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/configure-faraday-nginx.log; exit 1; }",
+
+    # show summary of logs and cleanup
+    "echo '--- provision logs (last 200 lines) ---'",
+    "sudo tail -n 200 /tmp/provision-logs/install-faraday.log || true",
+    "sudo rm -rf /tmp/scripts"
+    ]
+
+    connection {
+    type        = "ssh"
+    host        = hcloud_server.tenant_server.ipv4_address
+    port        = 2222
+    user        = var.provision_user
+    private_key = tls_private_key.ssh_key.private_key_pem
+    agent       = false
+    timeout     = "30m"
     }
+  }
 
     depends_on = [
         cloudflare_dns_record.faraday,
