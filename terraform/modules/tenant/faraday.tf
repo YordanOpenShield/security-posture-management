@@ -58,8 +58,8 @@ resource "null_resource" "provision_faraday_scripts" {
         inline = [
         "export DEBIAN_FRONTEND=noninteractive",
         # wait for cloud-init (if present) and for systemd jobs to settle
-        "until sudo cloud-init status | grep -q 'done'; do sleep 1; done || true",
-        "timeout=60; while systemctl list-jobs | grep -q systemd-sysctl && [ $timeout -gt 0 ]; do sleep 1; timeout=$((timeout-1)); done || true",
+        "timeout=60; while sudo cloud-init status | grep -vq 'done' && [ $timeout -gt 0 ]; do sleep 1 && echo 'Waiting for cloud-init...'; timeout=$((timeout-1)); done || true",
+        "timeout=60; while sudo systemctl list-jobs | grep -q systemd-sysctl && [ $timeout -gt 0 ]; do sleep 1 && echo 'Waiting for systemd-sysctl...'; timeout=$((timeout-1)); done || true",
         # make log dir
         "sudo mkdir -p /tmp/provision-logs && sudo chown ${var.provision_user}:${var.provision_user} /tmp/provision-logs",
         # ensure package index is fresh
