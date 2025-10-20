@@ -50,10 +50,10 @@ sudo apt install -f ${faraday_directory}/faraday-server_amd64.deb -y
 sudo usermod -aG faraday $(whoami)
 
 # Initialize Faraday database
-faraday-manage initdb
+sudo faraday-manage initdb
 
 # Change faraday's admin password
-faraday-manage change-password --username faraday --password ${faraday_password}
+sudo faraday-manage change-password --username faraday --password ${faraday_password}
 
 # Wait until no jobs for systemd-sysctl remain
 while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done

@@ -3,7 +3,7 @@
 echo "Configuring Nginx for Faraday..."
 
 # Request LetsEncrypt certificate for the domain
-sudo certbot certonly --nginx -d ${faraday_host} --non-interactive --agree-tos -m certbot@cyberdef.cc --redirect > ${faraday_directory}/certbot.log 2>&1
+sudo certbot certonly --nginx -d ${faraday_host} --non-interactive --agree-tos -m certbot@cyberdef.cc --redirect | sudo tee ${faraday_directory}/certbot.log 2>&1
 
 # Extract certificate and key paths
 CERT_PATH=$(grep -iE 'certificate is saved at:' ${faraday_directory}/certbot.log | awk '{print $5}')
@@ -14,7 +14,7 @@ if [ -z "$CERT_PATH" ] || [ -z "$KEY_PATH" ]; then
 fi
 
 # Generate Nginx configuration for Faraday
-echo y | faraday-manage generate-nginx-config --fqdn ${faraday_host} --port 5985 --ws-port 9000 --ssl-certificate $CERT_PATH --ssl-key $KEY_PATH | awk 'BEGIN{p=0} /^NGINX Config$/{getline; getline; p=1} p{print}' > ${faraday_directory}/faraday.conf 2>&1
+echo y | sudo faraday-manage generate-nginx-config --fqdn ${faraday_host} --port 5985 --ws-port 9000 --ssl-certificate $CERT_PATH --ssl-key $KEY_PATH | awk 'BEGIN{p=0} /^.*NGINX Config$/{getline; getline; p=1} p{print}' | sudo tee ${faraday_directory}/faraday.conf 2>&1
 
 # Move the generated config to Nginx sites-available
 sudo mv ${faraday_directory}/faraday.conf /etc/nginx/sites-available/faraday.conf
