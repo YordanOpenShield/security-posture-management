@@ -17,4 +17,5 @@ output "tenant_faraday_credentials" {
     username = "admin"
     password = random_password.faraday_admin_password.result
   }
+  sensitive = true
 }
