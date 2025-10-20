@@ -25,6 +25,15 @@ resource "local_file" "configure_faraday_nginx_sh" {
   filename = "${local.render_dir}/configure-faraday-nginx.sh"
 }
 
+resource "local_file" "configure_faraday_sh" {
+  content  = templatefile("${local.templates_dir}/configure-faraday.sh.tftpl", {
+    faraday_user     = local.faraday_user
+    faraday_password = random_password.faraday_password.result
+    faraday_url      = "https://faraday.${var.name}.${var.spm_subdomain}.${var.base_domain}"
+  })
+  filename = "${local.render_dir}/configure-faraday.sh"
+}
+
 resource "null_resource" "provision_faraday_scripts" {
     triggers = {
         always_run = timestamp()
@@ -64,6 +73,7 @@ resource "null_resource" "provision_faraday_scripts" {
         "sudo bash -x /tmp/scripts/install-faraday.sh >> /tmp/provision-logs/install-faraday.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/install-faraday.log; exit 1; }",
         "sudo bash -x /tmp/scripts/install-nginx.sh >> /tmp/provision-logs/install-nginx.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/install-nginx.log; exit 1; }",
         "sudo bash -x /tmp/scripts/configure-faraday-nginx.sh >> /tmp/provision-logs/configure-faraday-nginx.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/configure-faraday-nginx.log; exit 1; }",
+        "sudo bash -x /tmp/scripts/configure-faraday.sh >> /tmp/provision-logs/configure-faraday.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/configure-faraday.log; exit 1; }",
 
         # show summary of logs and cleanup
         "echo '--- provision logs (last 200 lines) ---'",
