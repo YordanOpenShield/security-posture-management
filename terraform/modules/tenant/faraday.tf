@@ -50,6 +50,8 @@ resource "null_resource" "provision_faraday_scripts" {
         inline = [
         # Set non-interactive frontend for apt
         "export DEBIAN_FRONTEND=noninteractive",
+        # Wait for a minute
+        "cloud-init status --wait > /dev/null 2>&1",
         # Update package lists
         "sudo apt update -y",
         # Make sure postgres and redis are running before installing Faraday
