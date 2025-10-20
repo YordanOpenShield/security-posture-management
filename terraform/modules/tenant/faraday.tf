@@ -84,6 +84,8 @@ resource "null_resource" "provision_faraday_scripts" {
         local_file.install_faraday_sh,
         local_file.install_nginx_sh,
         local_file.configure_faraday_nginx_sh,
-        random_password.faraday_password
+        random_password.faraday_password,
+        hcloud_server.tenant_server,
+        hcloud_volume.tenant_volume
     ]
 }
