@@ -1,0 +1,10 @@
+# !/bin/bash
+
+# Install faraday-cli
+sudo pip3 install faraday-cli
+
+# Authenticate faraday-cli
+faraday-cli auth -u ${faraday_user} -p ${faraday_password} -f ${faraday_url}
+
+# Create a default workspace
+faraday-cli workspace create default
