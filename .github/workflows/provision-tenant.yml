@@ -43,7 +43,7 @@ jobs:
           # Build terraform -var arguments conditionally from workflow inputs
           ARGS=("-var" "tenant=${{ github.event.inputs.tenant }}")
 
-          terraform apply "${ARGS[@]}" -auto-approve
+          terraform apply -target=modules.tenant "${ARGS[@]}" -auto-approve
 
       - name: Terraform Destroy
         working-directory: ./terraform
@@ -53,7 +53,7 @@ jobs:
           TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
         run: |
           set -e
-          terraform destroy -var "tenant=${{ github.event.inputs.tenant }}" -auto-approve
+          terraform destroy -target=modules.tenant -var "tenant=${{ github.event.inputs.tenant }}" -auto-approve
 
       - name: Upload terraform state (artifact)
         if: always()
