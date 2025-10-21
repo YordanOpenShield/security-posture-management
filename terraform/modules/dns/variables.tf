@@ -30,3 +30,9 @@ variable "faraday_subdomain" {
     type        = string
     default     = "faraday"
 }
+
+variable dependencies {
+  description = "A map of dependencies for this module"
+  type        = map(any)
+  default     = {}
+}

@@ -7,5 +7,5 @@ resource "cloudflare_dns_record" "faraday" {
 
   proxied = false
 
-  depends_on = [hcloud_server.tenant_server]
+  depends_on = var.dependencies
 }
