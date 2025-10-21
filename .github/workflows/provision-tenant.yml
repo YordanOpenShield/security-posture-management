@@ -14,7 +14,7 @@ on:
         type: boolean
         description: 'Destroy tenant'
         required: false
-        default: 'false'
+        default: false
 
 jobs:
   provision-tenant:

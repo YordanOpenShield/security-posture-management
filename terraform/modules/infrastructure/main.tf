@@ -49,7 +49,7 @@ resource "hcloud_server" "tenant_server" {
       - ufw allow http
       - ufw allow https
       - ufw enable
-      - reboot
+      # avoid reboot here; provisioning will be done by Terraform's remote-exec
     EOF
 
   depends_on = [
