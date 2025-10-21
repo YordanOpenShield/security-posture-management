@@ -70,9 +70,8 @@ resource "null_resource" "provision_faraday_scripts" {
         "sudo bash -x /tmp/scripts/configure-faraday-nginx.sh >> /tmp/provision-logs/configure-faraday-nginx.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/configure-faraday-nginx.log; exit 1; }",
         "sudo bash -x /tmp/scripts/configure-faraday.sh >> /tmp/provision-logs/configure-faraday.log 2>&1 || { sudo tail -n 200 /tmp/provision-logs/configure-faraday.log; exit 1; }",
 
-        # show summary of logs and cleanup
-        "echo '--- provision logs (last 200 lines) ---'",
-        "sudo tail -n 200 /tmp/provision-logs/install-faraday.log || true",
+        # clean up scripts
+        "sudo rm -rf /tmp/scripts",
         ]
 
         connection {
