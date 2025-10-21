@@ -15,6 +15,12 @@ on:
         description: 'Destroy tenant'
         required: false
         default: false
+      opensearch:
+        description: 'Opensearch endpoint'
+        required: true
+      postgres:
+        description: 'Postgres endpoint'
+        required: true
 
 jobs:
   provision-tenant:

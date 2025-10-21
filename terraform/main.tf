@@ -20,7 +20,7 @@ module "dns" {
     cloudflare_token = var.cloudflare_token
     tenant_name      = var.tenant
     tenant_host      = module.infrastructure.host
-    faraday_host     = "${local.faraday_subdomain}.${var.tenant}.${local.spm_subdomain}.${local.base_domain}"
+    faraday_host     = "${local.faraday_subdomain}"
     base_domain      = local.base_domain
 }
 
