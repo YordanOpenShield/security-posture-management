@@ -15,7 +15,3 @@ while systemctl list-jobs | grep -q systemd-sysctl; do sleep 1; done
 
 # Install certbot
 sudo apt install -y certbot python3-certbot-nginx
-
-# Adjust firewall to allow HTTP and HTTPS traffic
-sudo ufw allow http
-sudo ufw allow https

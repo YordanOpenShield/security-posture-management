@@ -33,7 +33,7 @@ resource "hcloud_server" "tenant_server" {
       - path: /etc/ssh/sshd_config.d/ssh-hardening.conf
         content: |
           PermitRootLogin no
-          PasswordAuthentication yes
+          PasswordAuthentication no
           Port 2222
           KbdInteractiveAuthentication no
           ChallengeResponseAuthentication no
@@ -49,7 +49,6 @@ resource "hcloud_server" "tenant_server" {
       - ufw allow 2222
       - ufw allow http
       - ufw allow https
-      - ufw allow 5985
       - ufw enable
       - reboot
     EOF
