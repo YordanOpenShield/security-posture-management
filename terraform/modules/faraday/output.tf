@@ -1,4 +1,4 @@
-output "tenant_faraday_credentials" {
+output "credentials" {
   value     = {
     url      = var.faraday_host
     username = local.faraday_user
