@@ -6,7 +6,6 @@ module "infrastructure" {
     source = "./modules/infrastructure"
 
     hetzner_token    = var.hetzner_token
-    cloudflare_token = var.cloudflare_token
     tenant_name      = var.tenant
     provision_user   = var.provision_user
 }
