@@ -1,8 +1,3 @@
-locals {
-  templates_dir = "${path.module}/templates"
-  render_dir    = "${path.module}/_rendered"
-}
-
 resource "local_file" "install_faraday_sh" {
   content  = templatefile("${local.templates_dir}/install-faraday.sh.tftpl", {
     faraday_directory = local.faraday_dir
