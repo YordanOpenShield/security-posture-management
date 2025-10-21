@@ -3,11 +3,11 @@
 # ===============================================
 
 module "infrastructure" {
-    source = "./modules/infrastructure"
+    source = "./modules/infra"
 
     hetzner_token    = var.hetzner_token
     tenant_name      = var.tenant
-    provision_user   = var.provision_user
+    provision_user   = local.provision_user
 }
 
 # ===============================================
@@ -20,12 +20,8 @@ module "dns" {
     cloudflare_token = var.cloudflare_token
     tenant_name      = var.tenant
     tenant_host      = module.infrastructure.tenant_server_ip
-    faraday_host     = "faraday.${var.tenant}.${local.spm_subdomain}.${local.base_domain}"
+    faraday_host     = "${local.faraday_subdomain}.${var.tenant}.${local.spm_subdomain}.${local.base_domain}"
     base_domain      = local.base_domain
-
-    depends_on = [
-        module.infrastructure
-    ]
 }
 
 # ===============================================
@@ -37,10 +33,5 @@ module "faraday" {
 
     hetzner_token     = var.hetzner_token
     provision_user    = local.provision_user
-    faraday_host      = "faraday.${var.tenant}.${local.spm_subdomain}.${local.base_domain}"
-
-    depends_on = [
-        module.infrastructure,
-        module.dns
-    ]
+    faraday_host      = module.dns.faraday_dns_record
 }
