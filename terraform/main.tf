@@ -3,7 +3,7 @@
 # ===============================================
 
 module "infrastructure" {
-    source = "./modules/infra"
+    source = "./modules/infrastructure"
 
     hetzner_token    = var.hetzner_token
     tenant_name      = var.tenant
