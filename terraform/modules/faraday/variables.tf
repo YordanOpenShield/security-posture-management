@@ -9,6 +9,12 @@ variable "provision_user" {
   type        = string
 }
 
+variable "provision_private_key" {
+    description = "Private SSH key for provisioning user"
+    type        = string
+    sensitive   = true
+}
+
 variable "faraday_version" {
   description = "Version of Faraday to install"
   type        = string

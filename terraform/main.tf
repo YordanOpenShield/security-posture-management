@@ -33,5 +33,6 @@ module "faraday" {
 
     hetzner_token     = var.hetzner_token
     provision_user    = local.provision_user
+    provision_private_key = module.infrastructure.ssh_private_key
     faraday_host      = module.dns.faraday_dns_record
 }

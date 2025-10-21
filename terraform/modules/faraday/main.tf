@@ -2,7 +2,7 @@ resource "local_file" "install_faraday_sh" {
   content  = templatefile("${local.templates_dir}/install-faraday.sh.tftpl", {
     faraday_directory = local.faraday_dir
     faraday_version   = var.faraday_version
-    faraday_password  = random_password.faraday_password.result
+    faraday_password  = local.faraday_password
   })
   filename = "${local.render_dir}/install-faraday.sh"
 }
@@ -23,7 +23,7 @@ resource "local_file" "configure_faraday_nginx_sh" {
 resource "local_file" "configure_faraday_sh" {
   content  = templatefile("${local.templates_dir}/configure-faraday.sh.tftpl", {
     faraday_user     = local.faraday_user
-    faraday_password = random_password.faraday_password.result
+    faraday_password = local.faraday_password
     faraday_url      = "https://${var.faraday_host}"
   })
   filename = "${local.render_dir}/configure-faraday.sh"
@@ -41,10 +41,10 @@ resource "null_resource" "provision_faraday_scripts" {
 
         connection {
         type        = "ssh"
-        host        = hcloud_server.tenant_server.ipv4_address
+        host        = var.faraday_host
         port        = 2222
         user        = var.provision_user
-        private_key = tls_private_key.ssh_key.private_key_pem
+        private_key = var.provision_private_key
         agent       = false
         }
     }
@@ -77,10 +77,10 @@ resource "null_resource" "provision_faraday_scripts" {
 
         connection {
         type        = "ssh"
-        host        = hcloud_server.tenant_server.ipv4_address
+        host        = var.faraday_host
         port        = 2222
         user        = var.provision_user
-        private_key = tls_private_key.ssh_key.private_key_pem
+        private_key = var.provision_private_key
         agent       = false
         timeout     = "30m"
         }
