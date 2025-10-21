@@ -6,6 +6,4 @@ resource "cloudflare_dns_record" "faraday" {
   ttl     = 3600
 
   proxied = false
-
-  depends_on = var.dependencies
 }
