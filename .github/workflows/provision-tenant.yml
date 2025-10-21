@@ -53,7 +53,7 @@ jobs:
           TF_VAR_cloudflare_token: ${{ secrets.CLOUDFLARE_TOKEN }}
         run: |
           set -e
-          terraform destroy -target=modules.tenant -var "tenant=${{ github.event.inputs.tenant }}" -auto-approve
+          terraform destroy -var "tenant=${{ github.event.inputs.tenant }}" -auto-approve
 
       - name: Upload terraform state (artifact)
         if: always()
