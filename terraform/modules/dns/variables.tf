@@ -14,19 +14,12 @@ variable "tenant_host" {
     type        = string
 }
 
+variable "faraday_host" {
+    description = "Fully qualified domain name for the Faraday instance"
+    type        = string
+}
+
 variable "base_domain" {
-    description = "The base domain for DNS records"
+    description = "Base domain for DNS records"
     type        = string
-}
-
-variable "spm_subdomain" {
-    description = "The subdomain under which tenant DNS records will be created"
-    type        = string
-    default     = "spm"
-}
-
-variable "faraday_subdomain" {
-    description = "The subdomain for Faraday service"
-    type        = string
-    default     = "faraday"
 }
