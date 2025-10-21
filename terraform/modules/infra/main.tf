@@ -9,7 +9,6 @@ resource "hcloud_server" "tenant_server" {
     solution = "spm"
   }
 
-  # TODO: Harden SSH further
   user_data = <<-EOF
     #cloud-config
     packages:
